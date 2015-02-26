@@ -4,8 +4,8 @@
   "repository": "https://github.com/stripe/example-ios-backend",
   "keywords": ["ios", "stripe"],
   "env": {
-    "STRIPE_TEST_PUBLISHABLE_KEY": {
-      "description": "Find me at https://dashboard.stripe.com/account/apikeys (pk_test_****)",
+    "STRIPE_TEST_SECRET_KEY": {
+      "description": "Find this at https://dashboard.stripe.com/account/apikeys (it'll look like sk_test_****)",
       "required": true
     }
   }
