@@ -7,6 +7,6 @@
     "STRIPE_TEST_PUBLISHABLE_KEY": {
       "description": "Find me at https://dashboard.stripe.com/account/apikeys (pk_test_****)",
       "required": true
-    },
+    }
   }
 }
