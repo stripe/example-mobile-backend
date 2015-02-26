@@ -6,6 +6,11 @@ Dotenv.load
 
 Stripe.api_key = ENV['STRIPE_TEST_SECRET_KEY']
 
+get '/' do
+  status 200
+  return "Great, your backend is set up. Now you can configure the Stripe example iOS apps to point here."
+end
+
 post '/charge' do
 
   # Get the credit card details submitted by the form
