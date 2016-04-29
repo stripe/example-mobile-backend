@@ -15,7 +15,7 @@ end
 post '/charge' do
 
   # Get the credit card details submitted by the form
-  source = params[:source]
+  source = params[:source] || params[:stripe_token]
   customer = params[:customer]
 
   # Create the charge on Stripe's servers - this will charge the user's card
