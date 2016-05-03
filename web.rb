@@ -72,14 +72,11 @@ post '/customers/:customer/sources' do
   end
 
   status 200
-  content_type :json
-  cards = customer.sources.all(:object => "card")
-  selected_card = cards.find {|c| c.id == customer.default_source}
-  return { :cards => cards.data, selected_card: selected_card }.to_json
+  return "Successfully added source."
 
 end
 
-post '/select_source' do
+post '/customers/:customer/select_source' do
 
   source = params[:source]
   customer = params[:customer]
@@ -95,9 +92,26 @@ post '/select_source' do
   end
 
   status 200
-  content_type :json
-  cards = customer.sources.all(:object => "card")
-  selected_card = cards.find {|c| c.id == customer.default_source}
-  return { :cards => cards.data, selected_card: selected_card }.to_json
+  return "Successfully selected default source."
 
 end
+
+delete '/customers/:customer/cards/:card' do
+
+  card = params[:card]
+  customer = params[:customer]
+
+  # Deletes the source from the customer
+  begin
+    customer = Stripe::Customer.retrieve(customer)
+    customer.sources.retrieve(card).delete()
+  rescue Stripe::StripeError => e
+    status 402
+    return "Error deleting card"
+  end
+
+  status 200
+  return "Successfully deleted card."
+
+end
+
