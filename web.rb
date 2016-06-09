@@ -37,7 +37,7 @@ post '/charge' do
 
 end
 
-get '/customers/:customer/cards' do
+get '/customers/:customer' do
 
   customer = params[:customer]
 
@@ -46,14 +46,12 @@ get '/customers/:customer/cards' do
     customer = Stripe::Customer.retrieve(customer)
   rescue Stripe::StripeError => e
     status 402
-    return "Error retrieving cards: #{e.message}"
+    return "Error retrieving customer: #{e.message}"
   end
 
   status 200
   content_type :json
-  cards = customer.sources.all(:object => "card")
-  selected_card = cards.find {|c| c.id == customer.default_source}
-  return { :cards => cards.data, selected_card: selected_card }.to_json
+  customer.to_json
 
 end
 
