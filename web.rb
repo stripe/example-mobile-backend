@@ -2,10 +2,13 @@ require 'sinatra'
 require 'stripe'
 require 'dotenv'
 require 'json'
+require 'encrypted_cookie'
 
 Dotenv.load
-
 Stripe.api_key = ENV['STRIPE_TEST_SECRET_KEY']
+
+use Rack::Session::EncryptedCookie,
+  :secret => 'replace_me_with_a_real_secret_key' # Actually use something secret here!
 
 get '/' do
   status 200
@@ -13,17 +16,16 @@ get '/' do
 end
 
 post '/charge' do
-
+  authenticate!
   # Get the credit card details submitted by the form
   source = params[:source] || params[:stripe_token] || params[:stripeToken]
-  customer = params[:customer]
 
   # Create the charge on Stripe's servers - this will charge the user's card
   begin
     charge = Stripe::Charge.create(
       :amount => params[:amount], # this number should be in cents
       :currency => "usd",
-      :customer => customer,
+      :customer => @customer.id,
       :source => source,
       :description => "Example Charge"
     )
@@ -34,36 +36,22 @@ post '/charge' do
 
   status 200
   return "Charge successfully created"
-
 end
 
-get '/customers/:customer' do
-
-  customer = params[:customer]
-
-  begin
-    # Retrieves the customer's cards
-    customer = Stripe::Customer.retrieve(customer)
-  rescue Stripe::StripeError => e
-    status 402
-    return "Error retrieving customer: #{e.message}"
-  end
-
+get '/customer' do
+  authenticate!
   status 200
   content_type :json
-  customer.to_json
-
+  @customer.to_json
 end
 
-post '/customers/:customer/sources' do
-
+post '/customer/sources' do
+  authenticate!
   source = params[:source]
-  customer = params[:customer]
 
   # Adds the token to the customer's sources
   begin
-    customer = Stripe::Customer.retrieve(customer)
-    customer.sources.create({:source => source})
+    @customer.sources.create({:source => source})
   rescue Stripe::StripeError => e
     status 402
     return "Error adding token to customer: #{e.message}"
@@ -71,19 +59,16 @@ post '/customers/:customer/sources' do
 
   status 200
   return "Successfully added source."
-
 end
 
-post '/customers/:customer/select_source' do
-
+post '/customer/default_source' do
+  authenticate!
   source = params[:source]
-  customer = params[:customer]
 
   # Sets the customer's default source
   begin
-    customer = Stripe::Customer.retrieve(customer)
-    customer.default_source = source
-    customer.save
+    @customer.default_source = source
+    @customer.save
   rescue Stripe::StripeError => e
     status 402
     return "Error selecting default source: #{e.message}"
@@ -91,25 +76,24 @@ post '/customers/:customer/select_source' do
 
   status 200
   return "Successfully selected default source."
-
 end
 
-delete '/customers/:customer/cards/:card' do
-
-  card = params[:card]
-  customer = params[:customer]
-
-  # Deletes the source from the customer
-  begin
-    customer = Stripe::Customer.retrieve(customer)
-    customer.sources.retrieve(card).delete()
-  rescue Stripe::StripeError => e
-    status 402
-    return "Error deleting card"
+def authenticate!
+  # This code simulates "loading the Stripe customer for your current session".
+  # Your own logic will likely look very different.
+  return @customer if @customer
+  if session.has_key?(:customer_id)
+    customer_id = session[:customer_id]
+    begin
+      @customer = Stripe::Customer.retrieve(customer_id)
+    rescue Stripe::InvalidRequestError
+    end
+  else
+    begin
+      @customer = Stripe::Customer.create(:description => "iOS SDK example customer")
+    rescue Stripe::InvalidRequestError
+    end
+    session[:customer_id] = @customer.id
   end
-
-  status 200
-  return "Successfully deleted card."
-
+  @customer
 end
-

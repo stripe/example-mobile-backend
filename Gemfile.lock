@@ -2,6 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     dotenv (1.0.2)
+    encrypted_cookie (0.0.4)
     json (1.8.2)
     mime-types (2.4.3)
     netrc (0.10.3)
@@ -26,6 +27,7 @@ PLATFORMS
 
 DEPENDENCIES
   dotenv (= 1.0.2)
+  encrypted_cookie (= 0.0.4)
   json (= 1.8.2)
   sinatra (= 1.4.5)
   stripe (= 1.20.0)
