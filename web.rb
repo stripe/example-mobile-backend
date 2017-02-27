@@ -98,17 +98,14 @@ def authenticate!
   @customer
 end
 
-# This endpoint is used by the Obj-C example to complete a charge.
-post '/charge_card' do
-  # Get the credit card details submitted by the form
-  token = params[:stripe_token]
-
-  # Create the charge on Stripe's servers - this will charge the user's card
+# This endpoint is used by the Obj-C example app to create a charge.
+post '/create_charge' do
+  # Create the charge on Stripe's servers
   begin
     charge = Stripe::Charge.create(
       :amount => params[:amount], # this number should be in cents
       :currency => "usd",
-      :card => token,
+      :source => params[:source],
       :description => "Example Charge"
     )
   rescue Stripe::StripeError => e
