@@ -12,7 +12,7 @@ use Rack::Session::EncryptedCookie,
 
 get '/' do
   status 200
-  return "Great, your backend is set up. Now you can configure the Stripe example iOS apps to point here."
+  return "Great, your backend is set up. Now you can configure the Stripe example apps to point here."
 end
 
 post '/charge' do
@@ -90,7 +90,7 @@ def authenticate!
     end
   else
     begin
-      @customer = Stripe::Customer.create(:description => "iOS SDK example customer")
+      @customer = Stripe::Customer.create(:description => "mobile SDK example customer")
     rescue Stripe::InvalidRequestError
     end
     session[:customer_id] = @customer.id

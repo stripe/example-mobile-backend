@@ -1,6 +1,6 @@
 {
-  "name": "Example Stripe iOS Backend",
-  "description": "For testing the Stripe example iOS apps at github.com/stripe/stripe-ios",
+  "name": "Example Stripe Backend",
+  "description": "For testing the Stripe example mobile apps at github.com/stripe/stripe-ios and github.com/stripe/stripe-android",
   "repository": "https://github.com/stripe/example-ios-backend",
   "keywords": ["ios", "stripe"],
   "env": {
