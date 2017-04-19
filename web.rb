@@ -116,3 +116,40 @@ post '/create_charge' do
   status 200
   return "Charge successfully created"
 end
+
+# This endpoint responds to webhooks sent by Stripe. To use it, you'll need
+# to add its URL (https://{your-app-name}.herokuapp.com/stripe-webhook)
+# in the webhook settings section of the Dashboard.
+# https://dashboard.stripe.com/account/webhooks
+post '/stripe-webhook' do
+  json = JSON.parse(request.body.read)
+
+  # Retrieving the event from Stripe guarantees its authenticity
+  event = Stripe::Event.retrieve(json["id"])
+  source = event.data.object
+
+  # For sources that require additional user action from your customer
+  # (e.g. authorizing the payment with their bank), you should use webhooks
+  # to create a charge after the source becomes chargeable.
+  # For more information, see https://stripe.com/docs/sources#best-practices
+  WEBHOOK_CHARGE_CREATION_TYPES = ['bancontact', 'giropay', 'ideal', 'sofort', 'three_d_secure']
+  if event.type == 'source.chargeable' && WEBHOOK_CHARGE_CREATION_TYPES.include?(source.type)
+    begin
+      charge = Stripe::Charge.create(
+        :amount => source.amount,
+        :currency => source.currency,
+        :source => source.id,
+        :description => "Example Charge"
+      )
+    rescue Stripe::StripeError => e
+      p "Error creating charge: #{e.message}"
+      return
+    end
+    # After successfully creating a charge, you should complete your customer's
+    # order and notify them that their order has been fulfilled (e.g. by sending
+    # an email). When creating the source in your app, consider storing any order
+    # information (e.g. order number) as metadata so that you can retrieve it
+    # here and use it to complete your customer's purchase.
+  end
+  status 200
+end
