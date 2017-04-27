@@ -139,6 +139,7 @@ post '/stripe-webhook' do
         :amount => source.amount,
         :currency => source.currency,
         :source => source.id,
+        :customer => source.metadata["customer"],
         :description => "Example Charge"
       )
     rescue Stripe::StripeError => e
