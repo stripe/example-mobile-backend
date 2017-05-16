@@ -15,6 +15,22 @@ get '/' do
   return "Great, your backend is set up. Now you can configure the Stripe example apps to point here."
 end
 
+post '/ephemeral_keys' do
+  authenticate!
+  begin
+    key = Stripe::EphemeralKey.create(
+      {customer: @customer.id},
+      {stripe_version: params["api_version"]}
+    )
+  rescue Stripe::StripeError => e
+    status 402
+    return "Error creating ephemeral key: #{e.message}"
+  end
+
+  status 200
+  key.to_json
+end
+
 post '/charge' do
   authenticate!
   # Get the credit card details submitted by the form
@@ -27,7 +43,8 @@ post '/charge' do
       :currency => "usd",
       :customer => @customer.id,
       :source => source,
-      :description => "Example Charge"
+      :description => "Example Charge",
+      :shipping => params[:shipping],
     )
   rescue Stripe::StripeError => e
     status 402
@@ -36,46 +53,6 @@ post '/charge' do
 
   status 200
   return "Charge successfully created"
-end
-
-get '/customer' do
-  authenticate!
-  status 200
-  content_type :json
-  @customer.to_json
-end
-
-post '/customer/sources' do
-  authenticate!
-  source = params[:source]
-
-  # Adds the token to the customer's sources
-  begin
-    @customer.sources.create({:source => source})
-  rescue Stripe::StripeError => e
-    status 402
-    return "Error adding token to customer: #{e.message}"
-  end
-
-  status 200
-  return "Successfully added source."
-end
-
-post '/customer/default_source' do
-  authenticate!
-  source = params[:source]
-
-  # Sets the customer's default source
-  begin
-    @customer.default_source = source
-    @customer.save
-  rescue Stripe::StripeError => e
-    status 402
-    return "Error selecting default source: #{e.message}"
-  end
-
-  status 200
-  return "Successfully selected default source."
 end
 
 def authenticate!
