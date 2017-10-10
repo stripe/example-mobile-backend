@@ -34,6 +34,11 @@ end
 post '/charge' do
   authenticate!
   # Get the credit card details submitted
+  p 'params'
+  p params
+  p 'request'
+  p request
+
   payload = params 
   payload = JSON.parse(request.body).symbolize_keys unless params
   source = payload[:source]
