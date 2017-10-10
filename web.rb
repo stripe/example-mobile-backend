@@ -33,19 +33,21 @@ end
 
 post '/charge' do
   authenticate!
-  # Get the credit card details submitted by the form
-  source = params[:source]
-  customer = params[:customer_id] || @customer.id
-  
+  # Get the credit card details submitted
+  payload = params.empty? ? indifferent_params(JSON.parse(request.body.read)) : params
+
+  source = payload[:source]
+  payload[:amount]
+  customer = payload[:customer_id] || @customer.id
   # Create the charge on Stripe's servers - this will charge the user's card
   begin
     charge = Stripe::Charge.create(
-      :amount => params[:amount], # this number should be in cents
+      :amount => payload[:amount], # this number should be in cents
       :currency => "usd",
       :customer => customer,
       :source => source,
       :description => "Example Charge",
-      :shipping => params[:shipping],
+      :shipping => payload[:shipping],
     )
   rescue Stripe::StripeError => e
     status 402
@@ -76,7 +78,7 @@ def authenticate!
   @customer
 end
 
-# This endpoint is used by the Obj-C example app to create a charge.
+# This endpoint is used by the Obj-C and Android example apps to create a charge.
 post '/create_charge' do
   # Create the charge on Stripe's servers
   begin
