@@ -38,7 +38,9 @@ post '/charge' do
   p params
   p 'request'
   p request
-
+  p 'request body'
+  p request.body
+  
   payload = params 
   payload = JSON.parse(request.body).symbolize_keys unless params
   source = payload[:source]
