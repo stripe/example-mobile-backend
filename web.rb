@@ -40,7 +40,6 @@ post '/charge' do
   end
 
   source = payload[:source]
-  payload[:amount]
   customer = payload[:customer_id] || @customer.id
   # Create the charge on Stripe's servers - this will charge the user's card
   begin
