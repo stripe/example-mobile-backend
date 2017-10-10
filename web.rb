@@ -38,8 +38,6 @@ post '/charge' do
   p params
   p 'request'
   p request
-  p 'request body'
-  p request.body.read
 
   payload = params 
   payload = JSON.parse(request.body.read) unless params
