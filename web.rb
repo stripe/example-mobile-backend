@@ -35,7 +35,7 @@ post '/charge' do
   authenticate!
   # Get the credit card details submitted
   payload = params
-  if request.accept? 'application/json' and params.empty? 
+  if request.content_type.include? 'application/json' and params.empty? 
     payload = indifferent_params(JSON.parse(request.body.read))
   end
 
