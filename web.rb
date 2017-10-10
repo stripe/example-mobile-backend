@@ -36,7 +36,11 @@ post '/charge' do
   # Get the credit card details submitted by the form
   source = params[:source]
   customer = params[:customer_id] || @customer.id
-  
+  if params[:shipping].instance_of? String
+    shipping = JSON.parse(params[:shipping])
+  else
+    shipping = params[:shipping]
+  end
   # Create the charge on Stripe's servers - this will charge the user's card
   begin
     charge = Stripe::Charge.create(
@@ -45,7 +49,7 @@ post '/charge' do
       :customer => customer,
       :source => source,
       :description => "Example Charge",
-      :shipping => params[:shipping],
+      :shipping => shipping,
     )
   rescue Stripe::StripeError => e
     status 402
