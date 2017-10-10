@@ -34,7 +34,10 @@ end
 post '/charge' do
   authenticate!
   # Get the credit card details submitted
-  payload = params.empty? ? indifferent_params(JSON.parse(request.body.read)) : params
+  payload = params
+  if request.accept? 'application/json' and params.empty? 
+    payload = indifferent_params(JSON.parse(request.body.read))
+  end
 
   source = payload[:source]
   payload[:amount]
