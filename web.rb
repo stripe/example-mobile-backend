@@ -40,9 +40,9 @@ post '/charge' do
   p request
   p 'request body'
   p request.body
-  
+
   payload = params 
-  payload = JSON.parse(request.body).symbolize_keys unless params
+  payload = JSON.parse(request.body.read) unless params
   source = payload[:source]
   customer = payload[:customer_id] || @customer.id
   # Create the charge on Stripe's servers - this will charge the user's card
