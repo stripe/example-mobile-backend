@@ -40,7 +40,7 @@ post '/charge' do
   p request
 
   payload = params 
-  payload = JSON.parse(request.body.read).symbolize_keys
+  payload = indifferent_params(JSON.parse(request.body.read))
   p 'payload'
   p payload
   source = payload[:source]
