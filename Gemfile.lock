@@ -1,35 +1,38 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    dotenv (1.0.2)
-    encrypted_cookie (0.0.4)
-    faraday (0.12.1)
+    dotenv (2.2.1)
+    encrypted_cookie (0.0.5)
+      rack (>= 1.1, < 3)
+    faraday (0.14.0)
       multipart-post (>= 1.2, < 3)
-    json (1.8.6)
+    json (2.1.0)
     multipart-post (2.0.0)
-    rack (1.6.6)
-    rack-protection (1.5.3)
+    mustermann (1.0.2)
+    rack (2.0.4)
+    rack-protection (2.0.1)
       rack
-    sinatra (1.4.7)
-      rack (~> 1.5)
-      rack-protection (~> 1.4)
-      tilt (>= 1.3, < 3)
-    stripe (2.12.0)
-      faraday (~> 0.9)
-    tilt (2.0.7)
+    sinatra (2.0.1)
+      mustermann (~> 1.0)
+      rack (~> 2.0)
+      rack-protection (= 2.0.1)
+      tilt (~> 2.0)
+    stripe (3.11.0)
+      faraday (~> 0.10)
+    tilt (2.0.8)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  dotenv (= 1.0.2)
-  encrypted_cookie (= 0.0.4)
-  json (= 1.8.6)
-  sinatra (= 1.4.7)
-  stripe (= 2.12.0)
+  dotenv (= 2.2.1)
+  encrypted_cookie (= 0.0.5)
+  json (= 2.1.0)
+  sinatra (= 2.0.1)
+  stripe (= 3.11.0)
 
 RUBY VERSION
-   ruby 2.3.1p112
+   ruby 2.5.0p0
 
 BUNDLED WITH
-   1.15.0
+   1.16.1
