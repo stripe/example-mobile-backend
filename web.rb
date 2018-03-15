@@ -10,9 +10,14 @@ Stripe.api_key = ENV['STRIPE_TEST_SECRET_KEY']
 use Rack::Session::EncryptedCookie,
   :secret => 'replace_me_with_a_real_secret_key' # Actually use something secret here!
 
+def log_info(message)
+  puts "\n" + message + "\n\n"
+  return message
+end
+
 get '/' do
   status 200
-  return "Great, your backend is set up. Now you can configure the Stripe example apps to point here."
+  return log_info("Great, your backend is set up. Now you can configure the Stripe example apps to point here.")
 end
 
 post '/ephemeral_keys' do
@@ -24,7 +29,7 @@ post '/ephemeral_keys' do
     )
   rescue Stripe::StripeError => e
     status 402
-    return "Error creating ephemeral key: #{e.message}"
+    return log_info("Error creating ephemeral key: #{e.message}")
   end
 
   status 200
@@ -35,7 +40,7 @@ post '/charge' do
   authenticate!
   # Get the credit card details submitted
   payload = params
-  if request.content_type.include? 'application/json' and params.empty? 
+  if request.content_type.include? 'application/json' and params.empty?
     payload = indifferent_params(JSON.parse(request.body.read))
   end
 
@@ -53,11 +58,11 @@ post '/charge' do
     )
   rescue Stripe::StripeError => e
     status 402
-    return "Error creating charge: #{e.message}"
+    return log_info("Error creating charge: #{e.message}")
   end
 
   status 200
-  return "Charge successfully created"
+  return log_info("Charge successfully created")
 end
 
 def authenticate!
@@ -92,11 +97,11 @@ post '/create_charge' do
     )
   rescue Stripe::StripeError => e
     status 402
-    return "Error creating charge: #{e.message}"
+    return log_info("Error creating charge: #{e.message}")
   end
 
   status 200
-  return "Charge successfully created"
+  return log_info("Charge successfully created")
 end
 
 # This endpoint responds to webhooks sent by Stripe. To use it, you'll need
@@ -125,8 +130,7 @@ post '/stripe-webhook' do
         :description => "Example Charge"
       )
     rescue Stripe::StripeError => e
-      p "Error creating charge: #{e.message}"
-      return
+      return log_info("Error creating charge: #{e.message}")
     end
     # After successfully creating a charge, you should complete your customer's
     # order and notify them that their order has been fulfilled (e.g. by sending
