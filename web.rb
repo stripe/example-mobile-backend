@@ -105,6 +105,24 @@ post '/create_charge' do
   return log_info("Charge successfully created")
 end
 
+post '/create_intent' do
+  begin
+    response, _ = Stripe::APIResource.request(:post, '/v1/payment_intents', {
+      :amount => params[:amount],
+      :currency => params[:currency] || 'usd',
+      :description => params[:description] || 'Example PaymentIntent charge',
+      :allowed_source_types => ['card'],
+    })
+    intent = Stripe::Util.convert_to_stripe_object(response.data)
+  rescue Stripe::StripeError => e
+    status 400
+    return e.to_s
+  end
+
+  status 200
+  return intent.client_secret
+end
+
 # This endpoint responds to webhooks sent by Stripe. To use it, you'll need
 # to add its URL (https://{your-app-name}.herokuapp.com/stripe-webhook)
 # in the webhook settings section of the Dashboard.
