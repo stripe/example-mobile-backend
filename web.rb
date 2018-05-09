@@ -120,7 +120,7 @@ post '/create_intent' do
   end
 
   status 200
-  return intent.client_secret
+  return {:intent => intent.id, :secret => intent.client_secret}.to_json
 end
 
 # This endpoint responds to webhooks sent by Stripe. To use it, you'll need
