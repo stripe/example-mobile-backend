@@ -32,6 +32,7 @@ post '/ephemeral_keys' do
     return log_info("Error creating ephemeral key: #{e.message}")
   end
 
+  content_type :json
   status 200
   key.to_json
 end
