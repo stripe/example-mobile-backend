@@ -1,7 +1,9 @@
 source "https://rubygems.org"
-ruby "2.1.2"
-gem 'sinatra', '1.4.5'
-gem 'stripe', '1.20.0'
-gem 'dotenv', '1.0.2'
-gem 'json', '1.8.2'
-gem 'encrypted_cookie', '0.0.4'
+
+ruby "2.5.0"
+
+gem 'dotenv', '2.2.1'
+gem 'encrypted_cookie', '0.0.5'
+gem 'json', '2.1.0'
+gem 'sinatra', '2.0.1'
+gem 'stripe', '3.11.0'
