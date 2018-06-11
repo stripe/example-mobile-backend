@@ -42,7 +42,7 @@ post '/charge' do
   # Get the credit card details submitted
   payload = params
   if request.content_type.include? 'application/json' and params.empty?
-    payload = indifferent_params(JSON.parse(request.body.read))
+    payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
   end
 
   source = payload[:source]
