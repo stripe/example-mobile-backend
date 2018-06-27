@@ -105,17 +105,22 @@ post '/create_charge' do
   return log_info("Charge successfully created")
 end
 
+# This endpoint is used by the mobile example apps to create a PaymentIntent.
+# https://stripe.com/docs/api#create_payment_intent
+# Just like the `/create_charge` endpoint, a real implementation would include controls
+# to prevent misuse
 post '/create_intent' do
   begin
     response, _ = Stripe::APIResource.request(:post, '/v1/payment_intents', {
+      :allowed_source_types => ['card'],
       :amount => params[:amount],
       :currency => params[:currency] || 'usd',
       :description => params[:description] || 'Example PaymentIntent charge',
-      :allowed_source_types => ['card'],
+      :return_url => params[:return_url],
     })
     intent = Stripe::Util.convert_to_stripe_object(response.data)
   rescue Stripe::StripeError => e
-    status 400
+    status 402
     return e.to_s
   end
 
