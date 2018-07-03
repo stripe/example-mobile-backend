@@ -121,9 +121,10 @@ post '/create_intent' do
     intent = Stripe::Util.convert_to_stripe_object(response.data)
   rescue Stripe::StripeError => e
     status 402
-    return e.to_s
+    return log_info("Error creating payment intent: #{e.message}")
   end
 
+  log_info("Payment Intent successfully created")
   status 200
   return {:intent => intent.id, :secret => intent.client_secret}.to_json
 end
