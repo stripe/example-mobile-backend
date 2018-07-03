@@ -111,14 +111,13 @@ end
 # to prevent misuse
 post '/create_intent' do
   begin
-    response, _ = Stripe::APIResource.request(:post, '/v1/payment_intents', {
+    intent = Stripe::PaymentIntent.create(
       :allowed_source_types => ['card'],
       :amount => params[:amount],
       :currency => params[:currency] || 'usd',
       :description => params[:description] || 'Example PaymentIntent charge',
       :return_url => params[:return_url],
-    })
-    intent = Stripe::Util.convert_to_stripe_object(response.data)
+    )
   rescue Stripe::StripeError => e
     status 402
     return log_info("Error creating payment intent: #{e.message}")
