@@ -17,7 +17,7 @@ GEM
       rack (~> 2.0)
       rack-protection (= 2.0.2)
       tilt (~> 2.0)
-    stripe (3.11.0)
+    stripe (3.17.0)
       faraday (~> 0.10)
     tilt (2.0.8)
 
@@ -29,7 +29,7 @@ DEPENDENCIES
   encrypted_cookie (= 0.0.5)
   json (= 2.1.0)
   sinatra (= 2.0.2)
-  stripe (= 3.11.0)
+  stripe (= 3.17.0)
 
 RUBY VERSION
    ruby 2.5.0p0

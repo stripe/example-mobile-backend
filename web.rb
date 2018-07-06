@@ -105,6 +105,29 @@ post '/create_charge' do
   return log_info("Charge successfully created")
 end
 
+# This endpoint is used by the mobile example apps to create a PaymentIntent.
+# https://stripe.com/docs/api#create_payment_intent
+# Just like the `/create_charge` endpoint, a real implementation would include controls
+# to prevent misuse
+post '/create_intent' do
+  begin
+    intent = Stripe::PaymentIntent.create(
+      :allowed_source_types => ['card'],
+      :amount => params[:amount],
+      :currency => params[:currency] || 'usd',
+      :description => params[:description] || 'Example PaymentIntent charge',
+      :return_url => params[:return_url],
+    )
+  rescue Stripe::StripeError => e
+    status 402
+    return log_info("Error creating payment intent: #{e.message}")
+  end
+
+  log_info("Payment Intent successfully created")
+  status 200
+  return {:intent => intent.id, :secret => intent.client_secret}.to_json
+end
+
 # This endpoint responds to webhooks sent by Stripe. To use it, you'll need
 # to add its URL (https://{your-app-name}.herokuapp.com/stripe-webhook)
 # in the webhook settings section of the Dashboard.
