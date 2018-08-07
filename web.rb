@@ -56,6 +56,9 @@ post '/charge' do
       :source => source,
       :description => "Example Charge",
       :shipping => payload[:shipping],
+      :metadata => {
+        :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
+      }.merge(payload[:metadata] || {}),
     )
   rescue Stripe::StripeError => e
     status 402
@@ -78,7 +81,13 @@ def authenticate!
     end
   else
     begin
-      @customer = Stripe::Customer.create(:description => "mobile SDK example customer")
+      @customer = Stripe::Customer.create(
+        :description => 'mobile SDK example customer',
+        :metadata => {
+          # Add our application's customer id for this Customer, so it'll be easier to look up
+          :my_customer_id => '72F8C533-FCD5-47A6-A45B-3956CA8C792D',
+        },
+      )
     rescue Stripe::InvalidRequestError
     end
     session[:customer_id] = @customer.id
@@ -94,7 +103,10 @@ post '/create_charge' do
       :amount => params[:amount], # this number should be in cents
       :currency => "usd",
       :source => params[:source],
-      :description => "Example Charge"
+      :description => "Example Charge",
+      :metadata => {
+        :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
+      }.merge(params[:metadata] || {}),
     )
   rescue Stripe::StripeError => e
     status 402
@@ -117,6 +129,9 @@ post '/create_intent' do
       :currency => params[:currency] || 'usd',
       :description => params[:description] || 'Example PaymentIntent charge',
       :return_url => params[:return_url],
+      :metadata => {
+        :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
+      }.merge(params[:metadata] || {}),
     )
   rescue Stripe::StripeError => e
     status 402
@@ -151,7 +166,10 @@ post '/stripe-webhook' do
         :currency => source.currency,
         :source => source.id,
         :customer => source.metadata["customer"],
-        :description => "Example Charge"
+        :description => "Example Charge",
+        :metadata => {
+          :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
+        }.merge(source.metadata || {}),
       )
     rescue Stripe::StripeError => e
       return log_info("Error creating charge: #{e.message}")
