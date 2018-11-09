@@ -128,7 +128,6 @@ post '/create_intent' do
       :amount => params[:amount],
       :currency => params[:currency] || 'usd',
       :description => params[:description] || 'Example PaymentIntent charge',
-      :return_url => params[:return_url],
       :metadata => {
         :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
       }.merge(params[:metadata] || {}),
