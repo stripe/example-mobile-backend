@@ -3,6 +3,7 @@
   "description": "For testing the Stripe example mobile apps at github.com/stripe/stripe-ios and github.com/stripe/stripe-android",
   "repository": "https://github.com/stripe/example-ios-backend",
   "keywords": ["ios", "stripe"],
+  "image": "heroku/ruby",
   "env": {
     "STRIPE_TEST_SECRET_KEY": {
       "description": "Find this at https://dashboard.stripe.com/account/apikeys (it'll look like sk_test_****)",
