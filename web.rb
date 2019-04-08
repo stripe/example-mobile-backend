@@ -124,7 +124,7 @@ end
 post '/create_intent' do
   begin
     intent = Stripe::PaymentIntent.create(
-      :allowed_source_types => ['card'],
+      :payment_method_types => ['card'],
       :amount => params[:amount],
       :currency => params[:currency] || 'usd',
       :description => params[:description] || 'Example PaymentIntent charge',
