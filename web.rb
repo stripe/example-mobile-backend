@@ -118,7 +118,7 @@ post '/create_charge' do
 end
 
 # This endpoint is used by the mobile example apps to create a PaymentIntent.
-# https://stripe.com/docs/api#create_payment_intent
+# https://stripe.com/docs/api/payment_intents/create
 # Just like the `/create_charge` endpoint, a real implementation would include controls
 # to prevent misuse
 post '/create_intent' do
