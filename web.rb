@@ -50,6 +50,7 @@ post '/charge' do
     payment_intent = create_and_capture_payment_intent(
       payload[:amount],
       payload[:source],
+      payload[:payment_method],
       payload[:customer_id] || @customer.id,
       payload[:metadata],
       'usd',
@@ -97,6 +98,7 @@ post '/create_charge' do
     payment_intent = create_and_capture_payment_intent(
       params[:amount],
       params[:source],
+      params[:payment_method],
       nil,
       params[:metadata],
       'usd',
@@ -119,6 +121,7 @@ post '/create_intent' do
   begin
     payment_intent = create_payment_intent(
       params[:amount],
+      nil,
       nil,
       nil,
       params[:metadata],
@@ -156,6 +159,7 @@ post '/stripe-webhook' do
       create_and_capture_payment_intent(
         source.amount,
         source.id,
+        nil,
         source.metadata["customer"],
         source.metadata,
         source.currency,
@@ -173,13 +177,14 @@ post '/stripe-webhook' do
   status 200
 end
 
-def create_payment_intent(amount, source_id, customer_id = nil,
+def create_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
                           metadata = {}, currency = 'usd', shipping = nil)
   return Stripe::PaymentIntent.create(
     :amount => amount,
     :currency => currency || 'usd',
     :customer => customer_id,
     :source => source_id,
+    :payment_method => payment_method_id,
     :payment_method_types => ['card'],
     :description => "Example PaymentIntent",
     :shipping => shipping,
@@ -189,8 +194,9 @@ def create_payment_intent(amount, source_id, customer_id = nil,
   )
 end
 
-def create_and_capture_payment_intent(amount, source_id, customer_id = nil,
+def create_and_capture_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
                                       metadata = {}, currency = 'usd', shipping = nil)
-  payment_intent = create_payment_intent(amount, source_id, customer_id, metadata, currency, shipping)
+  payment_intent = create_payment_intent(amount, source_id, payment_method_id, customer_id,
+                                          metadata, currency, shipping)
   return payment_intent.confirm()
 end
