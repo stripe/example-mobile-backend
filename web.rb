@@ -45,28 +45,24 @@ post '/charge' do
     payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
   end
 
-  source = payload[:source]
-  customer = payload[:customer_id] || @customer.id
-  # Create the charge on Stripe's servers - this will charge the user's card
+  # Create and capture the PaymentIntent via Stripe's API - this will charge the user's card
   begin
-    charge = Stripe::Charge.create(
-      :amount => payload[:amount], # this number should be in cents
-      :currency => "usd",
-      :customer => customer,
-      :source => source,
-      :description => "Example Charge",
-      :shipping => payload[:shipping],
-      :metadata => {
-        :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
-      }.merge(payload[:metadata] || {}),
+    payment_intent = create_and_capture_payment_intent(
+      payload[:amount],
+      payload[:source],
+      payload[:payment_method],
+      payload[:customer_id] || @customer.id,
+      payload[:metadata],
+      'usd',
+      payload[:shipping],
     )
   rescue Stripe::StripeError => e
     status 402
-    return log_info("Error creating charge: #{e.message}")
+    return log_info("Error: #{e.message}")
   end
 
   status 200
-  return log_info("Charge successfully created")
+  return payment_intent.to_json
 end
 
 def authenticate!
@@ -97,24 +93,24 @@ end
 
 # This endpoint is used by the Obj-C and Android example apps to create a charge.
 post '/create_charge' do
-  # Create the charge on Stripe's servers
+  # Create and capture the PaymentIntent via Stripe's API - this will charge the user's card
   begin
-    charge = Stripe::Charge.create(
-      :amount => params[:amount], # this number should be in cents
-      :currency => "usd",
-      :source => params[:source],
-      :description => "Example Charge",
-      :metadata => {
-        :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
-      }.merge(params[:metadata] || {}),
+    payment_intent = create_and_capture_payment_intent(
+      params[:amount],
+      params[:source],
+      params[:payment_method],
+      nil,
+      params[:metadata],
+      'usd',
+      nil
     )
   rescue Stripe::StripeError => e
     status 402
-    return log_info("Error creating charge: #{e.message}")
+    return log_info("Error: #{e.message}")
   end
 
   status 200
-  return log_info("Charge successfully created")
+  return payment_intent.to_json
 end
 
 # This endpoint is used by the mobile example apps to create a PaymentIntent.
@@ -123,23 +119,23 @@ end
 # to prevent misuse
 post '/create_intent' do
   begin
-    intent = Stripe::PaymentIntent.create(
-      :payment_method_types => ['card'],
-      :amount => params[:amount],
-      :currency => params[:currency] || 'usd',
-      :description => params[:description] || 'Example PaymentIntent charge',
-      :metadata => {
-        :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
-      }.merge(params[:metadata] || {}),
+    payment_intent = create_payment_intent(
+      params[:amount],
+      nil,
+      nil,
+      nil,
+      params[:metadata],
+      params[:currency],
+      nil
     )
   rescue Stripe::StripeError => e
     status 402
-    return log_info("Error creating payment intent: #{e.message}")
+    return log_info("Error creating PaymentIntent: #{e.message}")
   end
 
-  log_info("Payment Intent successfully created")
+  log_info("PaymentIntent successfully created: #{payment_intent.id}")
   status 200
-  return {:intent => intent.id, :secret => intent.client_secret}.to_json
+  return {:intent => payment_intent.id, :secret => payment_intent.client_secret}.to_json
 end
 
 # This endpoint responds to webhooks sent by Stripe. To use it, you'll need
@@ -155,29 +151,52 @@ post '/stripe-webhook' do
 
   # For sources that require additional user action from your customer
   # (e.g. authorizing the payment with their bank), you should use webhooks
-  # to create a charge after the source becomes chargeable.
+  # to capture a PaymentIntent after the source becomes chargeable.
   # For more information, see https://stripe.com/docs/sources#best-practices
   WEBHOOK_CHARGE_CREATION_TYPES = ['bancontact', 'giropay', 'ideal', 'sofort', 'three_d_secure']
   if event.type == 'source.chargeable' && WEBHOOK_CHARGE_CREATION_TYPES.include?(source.type)
     begin
-      charge = Stripe::Charge.create(
-        :amount => source.amount,
-        :currency => source.currency,
-        :source => source.id,
-        :customer => source.metadata["customer"],
-        :description => "Example Charge",
-        :metadata => {
-          :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
-        }.merge(source.metadata || {}),
+      create_and_capture_payment_intent(
+        source.amount,
+        source.id,
+        nil,
+        source.metadata["customer"],
+        source.metadata,
+        source.currency,
+        nil
       )
     rescue Stripe::StripeError => e
-      return log_info("Error creating charge: #{e.message}")
+      return log_info("Error creating PaymentIntent: #{e.message}")
     end
-    # After successfully creating a charge, you should complete your customer's
+    # After successfully capturing a PaymentIntent, you should complete your customer's
     # order and notify them that their order has been fulfilled (e.g. by sending
     # an email). When creating the source in your app, consider storing any order
     # information (e.g. order number) as metadata so that you can retrieve it
     # here and use it to complete your customer's purchase.
   end
   status 200
+end
+
+def create_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
+                          metadata = {}, currency = 'usd', shipping = nil)
+  return Stripe::PaymentIntent.create(
+    :amount => amount,
+    :currency => currency || 'usd',
+    :customer => customer_id,
+    :source => source_id,
+    :payment_method => payment_method_id,
+    :payment_method_types => ['card'],
+    :description => "Example PaymentIntent",
+    :shipping => shipping,
+    :metadata => {
+      :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
+    }.merge(metadata || {}),
+  )
+end
+
+def create_and_capture_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
+                                      metadata = {}, currency = 'usd', shipping = nil)
+  payment_intent = create_payment_intent(amount, source_id, payment_method_id, customer_id,
+                                          metadata, currency, shipping)
+  return payment_intent.confirm()
 end
