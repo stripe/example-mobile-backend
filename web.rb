@@ -199,5 +199,5 @@ def create_and_capture_payment_intent(amount, source_id, payment_method_id, cust
                                       metadata = {}, currency = 'usd', shipping = nil, return_url = nil)
   payment_intent = create_payment_intent(amount, source_id, payment_method_id, customer_id,
                                           metadata, currency, shipping, return_url)
-  return payment_intent.confirm()
+  return payment_intent
 end
