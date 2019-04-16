@@ -187,6 +187,8 @@ def create_payment_intent(amount, source_id, payment_method_id, customer_id = ni
     :description => "Example PaymentIntent",
     :shipping => shipping,
     :return_url => return_url,
+    :confirm => return_url != nil,
+    :confirmation_method => return_url == nil ? "automatic" : "manual",
     :metadata => {
       :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
     }.merge(metadata || {}),
