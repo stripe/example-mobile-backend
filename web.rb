@@ -176,7 +176,7 @@ post '/stripe-webhook' do
 end
 
 def create_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
-                          metadata = {}, currency = 'usd', shipping = nil, return_url = nil)
+                          metadata = {}, currency = 'usd', shipping = nil, return_url = nil, confirm = false)
   return Stripe::PaymentIntent.create(
     :amount => amount,
     :currency => currency || 'usd',
@@ -187,8 +187,8 @@ def create_payment_intent(amount, source_id, payment_method_id, customer_id = ni
     :description => "Example PaymentIntent",
     :shipping => shipping,
     :return_url => return_url,
-    :confirm => return_url != nil,
-    :confirmation_method => return_url == nil ? "automatic" : "manual",
+    :confirm => confirm,
+    :confirmation_method => confirm ? "manual" : "automatic",
     :metadata => {
       :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
     }.merge(metadata || {}),
@@ -198,6 +198,6 @@ end
 def create_and_capture_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
                                       metadata = {}, currency = 'usd', shipping = nil, return_url = nil)
   payment_intent = create_payment_intent(amount, source_id, payment_method_id, customer_id,
-                                          metadata, currency, shipping, return_url)
+                                          metadata, currency, shipping, return_url, true)
   return payment_intent
 end
