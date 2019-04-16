@@ -37,7 +37,7 @@ post '/ephemeral_keys' do
   key.to_json
 end
 
-post '/charge' do
+post '/capture_payment' do
   authenticate!
   # Get the credit card details submitted
   payload = params
@@ -91,31 +91,9 @@ def authenticate!
   @customer
 end
 
-# This endpoint is used by the Obj-C and Android example apps to create a charge.
-post '/create_charge' do
-  # Create and capture the PaymentIntent via Stripe's API - this will charge the user's card
-  begin
-    payment_intent = create_and_capture_payment_intent(
-      params[:amount],
-      params[:source],
-      params[:payment_method],
-      nil,
-      params[:metadata],
-      'usd',
-      nil
-    )
-  rescue Stripe::StripeError => e
-    status 402
-    return log_info("Error: #{e.message}")
-  end
-
-  status 200
-  return payment_intent.to_json
-end
-
 # This endpoint is used by the mobile example apps to create a PaymentIntent.
 # https://stripe.com/docs/api/payment_intents/create
-# Just like the `/create_charge` endpoint, a real implementation would include controls
+# Just like the `/capture_payment` endpoint, a real implementation would include controls
 # to prevent misuse
 post '/create_intent' do
   begin
