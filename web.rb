@@ -65,6 +65,23 @@ post '/capture_payment' do
   return payment_intent.to_json
 end
 
+post '/confirm_payment' do
+    authenticate!
+    payload = params
+    if request.content_type.include? 'application/json' and params.empty?
+        payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
+    end
+    begin
+        payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id])
+        rescue Stripe::StripeError => e
+        status 402
+        return log_info("Error: #{e.message}")
+    end
+
+    status 200
+    return payment_intent.to_json
+end
+
 def authenticate!
   # This code simulates "loading the Stripe customer for your current session".
   # Your own logic will likely look very different.
