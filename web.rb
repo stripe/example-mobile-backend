@@ -37,7 +37,7 @@ post '/ephemeral_keys' do
   key.to_json
 end
 
-post '/charge' do
+post '/capture_payment' do
   authenticate!
   # Get the credit card details submitted
   payload = params
@@ -55,6 +55,7 @@ post '/charge' do
       payload[:metadata],
       'usd',
       payload[:shipping],
+      payload[:return_url],
     )
   rescue Stripe::StripeError => e
     status 402
@@ -63,6 +64,23 @@ post '/charge' do
 
   status 200
   return payment_intent.to_json
+end
+
+post '/confirm_payment' do
+    authenticate!
+    payload = params
+    if request.content_type.include? 'application/json' and params.empty?
+        payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
+    end
+    begin
+        payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id])
+        rescue Stripe::StripeError => e
+        status 402
+        return log_info("Error: #{e.message}")
+    end
+
+    status 200
+    return payment_intent.to_json
 end
 
 def authenticate!
@@ -91,31 +109,9 @@ def authenticate!
   @customer
 end
 
-# This endpoint is used by the Obj-C and Android example apps to create a charge.
-post '/create_charge' do
-  # Create and capture the PaymentIntent via Stripe's API - this will charge the user's card
-  begin
-    payment_intent = create_and_capture_payment_intent(
-      params[:amount],
-      params[:source],
-      params[:payment_method],
-      nil,
-      params[:metadata],
-      'usd',
-      nil
-    )
-  rescue Stripe::StripeError => e
-    status 402
-    return log_info("Error: #{e.message}")
-  end
-
-  status 200
-  return payment_intent.to_json
-end
-
 # This endpoint is used by the mobile example apps to create a PaymentIntent.
 # https://stripe.com/docs/api/payment_intents/create
-# Just like the `/create_charge` endpoint, a real implementation would include controls
+# Just like the `/capture_payment` endpoint, a real implementation would include controls
 # to prevent misuse
 post '/create_intent' do
   begin
@@ -126,6 +122,7 @@ post '/create_intent' do
       nil,
       params[:metadata],
       params[:currency],
+      nil,
       nil
     )
   rescue Stripe::StripeError => e
@@ -163,6 +160,7 @@ post '/stripe-webhook' do
         source.metadata["customer"],
         source.metadata,
         source.currency,
+        nil,
         nil
       )
     rescue Stripe::StripeError => e
@@ -178,7 +176,7 @@ post '/stripe-webhook' do
 end
 
 def create_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
-                          metadata = {}, currency = 'usd', shipping = nil)
+                          metadata = {}, currency = 'usd', shipping = nil, return_url = nil, confirm = false)
   return Stripe::PaymentIntent.create(
     :amount => amount,
     :currency => currency || 'usd',
@@ -188,6 +186,9 @@ def create_payment_intent(amount, source_id, payment_method_id, customer_id = ni
     :payment_method_types => ['card'],
     :description => "Example PaymentIntent",
     :shipping => shipping,
+    :return_url => return_url,
+    :confirm => confirm,
+    :confirmation_method => confirm ? "manual" : "automatic",
     :metadata => {
       :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
     }.merge(metadata || {}),
@@ -195,8 +196,8 @@ def create_payment_intent(amount, source_id, payment_method_id, customer_id = ni
 end
 
 def create_and_capture_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
-                                      metadata = {}, currency = 'usd', shipping = nil)
+                                      metadata = {}, currency = 'usd', shipping = nil, return_url = nil)
   payment_intent = create_payment_intent(amount, source_id, payment_method_id, customer_id,
-                                          metadata, currency, shipping)
-  return payment_intent.confirm()
+                                          metadata, currency, shipping, return_url, true)
+  return payment_intent
 end
