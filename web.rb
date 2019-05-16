@@ -132,7 +132,11 @@ post '/create_intent' do
 
   log_info("PaymentIntent successfully created: #{payment_intent.id}")
   status 200
-  return payment_intent.to_json
+  return {
+    :intent => payment_intent.id,
+    :secret => payment_intent.client_secret,
+    :status => payment_intent.status
+  }.to_json
 end
 
 # This endpoint responds to webhooks sent by Stripe. To use it, you'll need
