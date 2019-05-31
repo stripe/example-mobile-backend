@@ -104,18 +104,9 @@ def authenticate!
       )
       # Attach some test cards to the customer for testing convenience.
       # See https://stripe.com/docs/testing#cards
-      ['4000000000003220', '4242424242424242'].each { |number|
-        paymentMethod = Stripe::PaymentMethod.create({
-          type: 'card',
-          card: {
-            number: number,
-            exp_month: 5,
-            exp_year: 2023,
-            cvc: '000',
-          },
-        })
+      ['pm_card_threeDSecure2Required', 'pm_card_visa'].each { |pm_id|
         Stripe::PaymentMethod.attach(
-          paymentMethod.id,
+          pm_id,
           {
             customer: @customer.id,
           }
