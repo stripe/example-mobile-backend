@@ -103,7 +103,7 @@ def authenticate!
         },
       )
       # Attach some test cards to the customer for testing convenience.
-      # See https://stripe.com/docs/payments/3d-secure#three-ds-cards
+      # See https://stripe.com/docs/testing#cards
       ['4000000000003220', '4242424242424242'].each { |number|
         paymentMethod = Stripe::PaymentMethod.create({
           type: 'card',
