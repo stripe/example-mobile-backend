@@ -102,6 +102,17 @@ def authenticate!
           :my_customer_id => '72F8C533-FCD5-47A6-A45B-3956CA8C792D',
         },
       )
+      # Attach some test cards to the customer for testing convenience.
+      # See https://stripe.com/docs/testing#cards
+      ['pm_card_threeDSecure2Required', 'pm_card_visa'].each { |pm_id|
+        Stripe::PaymentMethod.attach(
+          pm_id,
+          {
+            customer: @customer.id,
+          }
+        )
+        }
+
     rescue Stripe::InvalidRequestError
     end
     session[:customer_id] = @customer.id
