@@ -102,6 +102,17 @@ def authenticate!
           :my_customer_id => '72F8C533-FCD5-47A6-A45B-3956CA8C792D',
         },
       )
+      # Attach some test cards to the customer for testing convenience.
+      # See https://stripe.com/docs/testing#cards
+      ['pm_card_threeDSecure2Required', 'pm_card_visa'].each { |pm_id|
+        Stripe::PaymentMethod.attach(
+          pm_id,
+          {
+            customer: @customer.id,
+          }
+        )
+        }
+
     rescue Stripe::InvalidRequestError
     end
     session[:customer_id] = @customer.id
@@ -132,7 +143,11 @@ post '/create_intent' do
 
   log_info("PaymentIntent successfully created: #{payment_intent.id}")
   status 200
-  return {:intent => payment_intent.id, :secret => payment_intent.client_secret}.to_json
+  return {
+    :intent => payment_intent.id,
+    :secret => payment_intent.client_secret,
+    :status => payment_intent.status
+  }.to_json
 end
 
 # This endpoint responds to webhooks sent by Stripe. To use it, you'll need
