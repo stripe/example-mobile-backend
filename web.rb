@@ -120,6 +120,29 @@ def authenticate!
   @customer
 end
 
+# This endpoint is used by the mobile example apps to create a SetupIntent.
+# https://stripe.com/docs/api/setup_intents/create
+# Just like the `/capture_payment` endpoint, a real implementation would include controls
+# to prevent misuse
+post '/create_setup_intent' do
+  begin
+    setup_intent = Stripe::SetupIntent.create({
+      payment_method_types: ['card'],
+    })
+  rescue Stripe::StripeError => e
+    status 402
+    return log_info("Error creating SetupIntent: #{e.message}")
+  end
+
+  log_info("SetupIntent successfully created: #{setup_intent.id}")
+  status 200
+  return {
+    :intent => setup_intent.id,
+    :secret => setup_intent.client_secret,
+    :status => setup_intent.status
+  }.to_json
+end
+
 # This endpoint is used by the mobile example apps to create a PaymentIntent.
 # https://stripe.com/docs/api/payment_intents/create
 # Just like the `/capture_payment` endpoint, a real implementation would include controls

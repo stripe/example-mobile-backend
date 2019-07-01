@@ -8,9 +8,9 @@ GEM
     faraday (0.15.4)
       multipart-post (>= 1.2, < 3)
     json (2.2.0)
-    multipart-post (2.0.0)
+    multipart-post (2.1.1)
     mustermann (1.0.3)
-    net-http-persistent (3.0.0)
+    net-http-persistent (3.0.1)
       connection_pool (~> 2.2)
     rack (2.0.7)
     rack-protection (2.0.5)
@@ -20,7 +20,7 @@ GEM
       rack (~> 2.0)
       rack-protection (= 2.0.5)
       tilt (~> 2.0)
-    stripe (4.12.0)
+    stripe (4.21.0)
       faraday (~> 0.13)
       net-http-persistent (~> 3.0)
     tilt (2.0.9)
@@ -33,7 +33,7 @@ DEPENDENCIES
   encrypted_cookie (= 0.0.5)
   json (= 2.2.0)
   sinatra (= 2.0.5)
-  stripe (= 4.12.0)
+  stripe (= 4.21.0)
 
 RUBY VERSION
    ruby 2.5.3p105
