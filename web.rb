@@ -56,6 +56,7 @@ post '/capture_payment' do
       'usd',
       payload[:shipping],
       payload[:return_url],
+      payload[:setup_future_usage],
     )
   rescue Stripe::StripeError => e
     status 402
@@ -214,7 +215,7 @@ post '/stripe-webhook' do
 end
 
 def create_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
-                          metadata = {}, currency = 'usd', shipping = nil, return_url = nil, confirm = false)
+                          metadata = {}, currency = 'usd', shipping = nil, return_url = nil, confirm = false, setup_future_usage = nil)
   return Stripe::PaymentIntent.create(
     :amount => amount,
     :currency => currency || 'usd',
@@ -227,6 +228,7 @@ def create_payment_intent(amount, source_id, payment_method_id, customer_id = ni
     :return_url => return_url,
     :confirm => confirm,
     :confirmation_method => confirm ? "manual" : "automatic",
+    :setup_future_usage => setup_future_usage,
     :metadata => {
       :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
     }.merge(metadata || {}),
@@ -234,8 +236,8 @@ def create_payment_intent(amount, source_id, payment_method_id, customer_id = ni
 end
 
 def create_and_capture_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
-                                      metadata = {}, currency = 'usd', shipping = nil, return_url = nil)
+                                      metadata = {}, currency = 'usd', shipping = nil, return_url = nil, setup_future_usage = nil)
   payment_intent = create_payment_intent(amount, source_id, payment_method_id, customer_id,
-                                          metadata, currency, shipping, return_url, true)
+                                          metadata, currency, shipping, return_url, true, setup_future_usage)
   return payment_intent
 end
