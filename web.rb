@@ -63,7 +63,9 @@ post '/capture_payment' do
   end
 
   status 200
-  return payment_intent.to_json
+  return {
+      :secret => payment_intent.client_secret
+  }.to_json
 end
 
 post '/confirm_payment' do
@@ -80,7 +82,9 @@ post '/confirm_payment' do
     end
 
     status 200
-    return payment_intent.to_json
+    return {
+        :secret => payment_intent.client_secret
+    }.to_json
 end
 
 def authenticate!
