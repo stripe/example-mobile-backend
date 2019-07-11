@@ -2,7 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     connection_pool (2.2.2)
-    dotenv (2.7.2)
+    dotenv (2.7.4)
     encrypted_cookie (0.0.5)
       rack (>= 1.1, < 3)
     faraday (0.15.4)
@@ -20,7 +20,7 @@ GEM
       rack (~> 2.0)
       rack-protection (= 2.0.5)
       tilt (~> 2.0)
-    stripe (4.21.0)
+    stripe (4.21.2)
       faraday (~> 0.13)
       net-http-persistent (~> 3.0)
     tilt (2.0.9)
@@ -29,11 +29,11 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  dotenv (= 2.7.2)
+  dotenv (= 2.7.4)
   encrypted_cookie (= 0.0.5)
   json (= 2.2.0)
   sinatra (= 2.0.5)
-  stripe (= 4.21.0)
+  stripe (= 4.21.2)
 
 RUBY VERSION
    ruby 2.5.3p105
