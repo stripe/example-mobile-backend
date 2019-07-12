@@ -231,6 +231,7 @@ def create_payment_intent(amount, source_id, payment_method_id, customer_id = ni
     :return_url => return_url,
     :confirm => confirm,
     :confirmation_method => confirm ? "manual" : "automatic",
+    :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
     :metadata => {
       :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
     }.merge(metadata || {}),
