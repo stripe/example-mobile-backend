@@ -75,7 +75,7 @@ post '/confirm_payment' do
         payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
     end
     begin
-        payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id])
+        payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id] {:use_stripe_sdk => true})
         rescue Stripe::StripeError => e
         status 402
         return log_info("Error: #{e.message}")
@@ -231,6 +231,7 @@ def create_payment_intent(amount, source_id, payment_method_id, customer_id = ni
     :return_url => return_url,
     :confirm => confirm,
     :confirmation_method => confirm ? "manual" : "automatic",
+    :use_stripe_sdk => confirm ? true : nil
     :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
     :metadata => {
       :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
