@@ -53,7 +53,7 @@ post '/capture_payment' do
       payload[:payment_method],
       payload[:customer_id] || @customer.id,
       payload[:metadata],
-      'usd',
+      'eur',
       payload[:shipping],
       payload[:return_url],
     )
@@ -226,10 +226,10 @@ post '/stripe-webhook' do
 end
 
 def create_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
-                          metadata = {}, currency = 'usd', shipping = nil, return_url = nil, confirm = false)
+                          metadata = {}, currency = 'eur', shipping = nil, return_url = nil, confirm = false)
   return Stripe::PaymentIntent.create(
     :amount => amount,
-    :currency => currency || 'usd',
+    :currency => currency || 'eur',
     :customer => customer_id,
     :source => source_id,
     :payment_method => payment_method_id,
@@ -248,7 +248,7 @@ def create_payment_intent(amount, source_id, payment_method_id, customer_id = ni
 end
 
 def create_and_capture_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
-                                      metadata = {}, currency = 'usd', shipping = nil, return_url = nil)
+                                      metadata = {}, currency = 'eur', shipping = nil, return_url = nil)
   payment_intent = create_payment_intent(amount, source_id, payment_method_id, customer_id,
                                           metadata, currency, shipping, return_url, true)
   return payment_intent
