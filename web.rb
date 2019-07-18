@@ -130,7 +130,7 @@ end
 # to prevent misuse
 post '/create_setup_intent' do
   payload = params
-  if request.content_type.include? 'application/json' and params.empty?
+  if request.content_type != nil and request.content_type.include? 'application/json' and params.empty?
       payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
   end
   begin
