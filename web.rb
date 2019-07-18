@@ -129,7 +129,6 @@ end
 # Just like the `/capture_payment` endpoint, a real implementation would include controls
 # to prevent misuse
 post '/create_setup_intent' do
-  authenticate!
   paylod = params
   if request.content_type.include? 'application/json' and params.empty?
       payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
