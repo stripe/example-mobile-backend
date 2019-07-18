@@ -129,9 +129,18 @@ end
 # Just like the `/capture_payment` endpoint, a real implementation would include controls
 # to prevent misuse
 post '/create_setup_intent' do
+  authenticate!
+  paylod = params
+  if request.content_type.include? 'application/json' and params.empty?
+      payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
+  end
   begin
     setup_intent = Stripe::SetupIntent.create({
       payment_method_types: ['card'],
+      payment_method: payload[:payment_method],
+      return_url: payload[:return_url],
+      confirm: payload[:payment_method] != nil,
+      use_stripe_sdk: payload[:payment_method] != nil ? true : nil,
     })
   rescue Stripe::StripeError => e
     status 402
@@ -145,6 +154,25 @@ post '/create_setup_intent' do
     :secret => setup_intent.client_secret,
     :status => setup_intent.status
   }.to_json
+end
+
+post '/confirm_setup_intent' do
+    authenticate!
+    payload = params
+    if request.content_type.include? 'application/json' and params.empty?
+        payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
+    end
+    begin
+        payment_intent = Stripe::SetupIntent.confirm(payload[:setup_intent_id], {:use_stripe_sdk => true})
+        rescue Stripe::StripeError => e
+        status 402
+        return log_info("Error: #{e.message}")
+    end
+
+    status 200
+    return {
+        :secret => payment_intent.client_secret
+    }.to_json
 end
 
 # This endpoint is used by the mobile example apps to create a PaymentIntent.
