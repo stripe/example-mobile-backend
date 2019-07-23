@@ -47,16 +47,21 @@ post '/capture_payment' do
 
   # Create and capture the PaymentIntent via Stripe's API - this will charge the user's card
   begin
-    payment_intent = create_and_capture_payment_intent(
-      payload[:amount],
-      payload[:source],
-      payload[:payment_method],
-      payload[:customer_id] || @customer.id,
-      payload[:metadata],
-      'usd',
-      payload[:shipping],
-      payload[:return_url],
-    )
+    payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
+    if payment_intent_id
+      payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
+    else
+      payment_intent = create_and_capture_payment_intent(
+        payload[:amount],
+        payload[:source],
+        payload[:payment_method],
+        payload[:customer_id] || @customer.id,
+        payload[:metadata],
+        'usd',
+        payload[:shipping],
+        payload[:return_url],
+      )
+    end
   rescue Stripe::StripeError => e
     status 402
     return log_info("Error: #{e.message}")
@@ -98,30 +103,38 @@ def authenticate!
     rescue Stripe::InvalidRequestError
     end
   else
-    begin
-      @customer = Stripe::Customer.create(
-        :description => 'mobile SDK example customer',
-        :metadata => {
-          # Add our application's customer id for this Customer, so it'll be easier to look up
-          :my_customer_id => '72F8C533-FCD5-47A6-A45B-3956CA8C792D',
-        },
-      )
-      # Attach some test cards to the customer for testing convenience.
-      # See https://stripe.com/docs/testing#cards
-      ['pm_card_threeDSecure2Required', 'pm_card_visa'].each { |pm_id|
-        Stripe::PaymentMethod.attach(
-          pm_id,
-          {
-            customer: @customer.id,
-          }
-        )
+    default_cusomer_id = ENV['DEFAULT_CUSTOMER_ID']
+    if default_cusomer_id
+      @customer = Stripe::Customer.retrieve(default_cusomer_id)
+    else
+      begin
+        @customer = create_customer()
+        # Attach some test cards to the customer for testing convenience.
+        # See https://stripe.com/docs/testing#cards
+        ['pm_card_threeDSecure2Required', 'pm_card_visa'].each { |pm_id|
+          Stripe::PaymentMethod.attach(
+            pm_id,
+            {
+              customer: @customer.id,
+            }
+          )
         }
-
-    rescue Stripe::InvalidRequestError
+      rescue Stripe::InvalidRequestError
+      end
     end
     session[:customer_id] = @customer.id
   end
   @customer
+end
+
+def create_customer
+  Stripe::Customer.create(
+    :description => 'mobile SDK example customer',
+    :metadata => {
+      # Add our application's customer id for this Customer, so it'll be easier to look up
+      :my_customer_id => '72F8C533-FCD5-47A6-A45B-3956CA8C792D',
+    },
+  )
 end
 
 # This endpoint is used by the mobile example apps to create a SetupIntent.
@@ -161,16 +174,21 @@ end
 # to prevent misuse
 post '/create_intent' do
   begin
-    payment_intent = create_payment_intent(
-      params[:amount],
-      nil,
-      nil,
-      nil,
-      params[:metadata],
-      params[:currency],
-      nil,
-      nil
-    )
+    payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
+    if payment_intent_id
+      payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
+    else
+      payment_intent = create_payment_intent(
+        params[:amount],
+        nil,
+        nil,
+        nil,
+        params[:metadata],
+        params[:currency],
+        nil,
+        nil
+      )
+    end
   rescue Stripe::StripeError => e
     status 402
     return log_info("Error creating PaymentIntent: #{e.message}")
@@ -249,7 +267,6 @@ end
 
 def create_and_capture_payment_intent(amount, source_id, payment_method_id, customer_id = nil,
                                       metadata = {}, currency = 'usd', shipping = nil, return_url = nil)
-  payment_intent = create_payment_intent(amount, source_id, payment_method_id, customer_id,
+  return create_payment_intent(amount, source_id, payment_method_id, customer_id,
                                           metadata, currency, shipping, return_url, true)
-  return payment_intent
 end
