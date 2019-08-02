@@ -152,6 +152,7 @@ post '/create_setup_intent' do
       payment_method: payload[:payment_method],
       return_url: payload[:return_url],
       confirm: payload[:payment_method] != nil,
+      customer: payload[:customer_id],
       use_stripe_sdk: payload[:payment_method] != nil ? true : nil,
     })
   rescue Stripe::StripeError => e
