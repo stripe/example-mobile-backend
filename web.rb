@@ -110,9 +110,25 @@ def authenticate!
     else
       begin
         @customer = create_customer()
+
+        payment_methods = ['pm_card_threeDSecure2Required', 'pm_card_visa']
+
+        ['4000000000003220', '4000000000003238', '4000000000003246', '4000000000003253'].each { |cc_number|
+          pm = Stripe::PaymentMethod.create({
+            type: 'card',
+            card: {
+              number: cc_number,
+              exp_month: 8,
+              exp_year: 2022,
+              cvc: '123',
+            },
+          })
+          payment_methods.push pm.id
+        }
+
         # Attach some test cards to the customer for testing convenience.
         # See https://stripe.com/docs/testing#cards
-        ['pm_card_threeDSecure2Required', 'pm_card_visa'].each { |pm_id|
+        payment_methods.each { |pm_id|
           Stripe::PaymentMethod.attach(
             pm_id,
             {
