@@ -111,10 +111,11 @@ def authenticate!
       begin
         @customer = create_customer()
 
-        payment_methods = []
-
+        # Attach some test cards to the customer for testing convenience.
+        # See https://stripe.com/docs/payments/3d-secure#three-ds-cards 
+        # and https://stripe.com/docs/mobile/android/authentication#testing
         ['4000000000003220', '4000000000003238', '4000000000003246', '4000000000003253', '4242424242424242'].each { |cc_number|
-          pm = Stripe::PaymentMethod.create({
+          payment_method = Stripe::PaymentMethod.create({
             type: 'card',
             card: {
               number: cc_number,
@@ -123,14 +124,9 @@ def authenticate!
               cvc: '123',
             },
           })
-          payment_methods.push pm.id
-        }
 
-        # Attach some test cards to the customer for testing convenience.
-        # See https://stripe.com/docs/testing#cards
-        payment_methods.each { |pm_id|
           Stripe::PaymentMethod.attach(
-            pm_id,
+            payment_method.id,
             {
               customer: @customer.id,
             }
