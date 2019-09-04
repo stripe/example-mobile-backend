@@ -187,6 +187,7 @@ end
 # Just like the `/capture_payment` endpoint, a real implementation would include controls
 # to prevent misuse
 post '/create_payment_intent' do
+  authenticate!
   begin
     payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
     if payment_intent_id
