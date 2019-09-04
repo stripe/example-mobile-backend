@@ -186,14 +186,14 @@ end
 # https://stripe.com/docs/api/payment_intents/create
 # Just like the `/capture_payment` endpoint, a real implementation would include controls
 # to prevent misuse
-post '/create_intent' do
+post '/create_payment_intent' do
   begin
     payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
     if payment_intent_id
       payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
     else
       payment_intent = create_payment_intent(
-        params[:amount],
+        params[:amount] || 100, # Sending the amount from the client is a security hazard, this is for demo purposes only
         nil,
         nil,
         params[:payment_method_types] || ['card'],
