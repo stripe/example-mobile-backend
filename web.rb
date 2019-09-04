@@ -188,19 +188,22 @@ end
 # to prevent misuse
 post '/create_payment_intent' do
   authenticate!
+  payload = params
+  if request.content_type != nil and request.content_type.include? 'application/json' and params.empty?
+      payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
+  end
+
   begin
     payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
     if payment_intent_id
       payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
     else
       payment_intent = create_payment_intent(
-        amount: params[:amount] || 100, # Sending the amount from the client is a security hazard, this is for demo purposes only
-        source_id: nil,
-        payment_method_id: nil,
-        payment_method_types: params[:payment_method_types] || ['card'],
-        customer_id: params[:customer_id] || @customer.id,
-        metadata: params[:metadata],
-        currency: params[:currency],
+        amount: payload[:amount] || 1000, # Sending the amount from the client is a security hazard, this is for demo purposes only
+        payment_method_types: payload[:payment_method_types],
+        customer_id: payload[:customer_id] || @customer.id,
+        metadata: payload[:metadata],
+        currency: payload[:currency],
       )
     end
   rescue Stripe::StripeError => e
@@ -258,15 +261,15 @@ post '/stripe-webhook' do
   status 200
 end
 
-def create_payment_intent(amount, source_id, payment_method_id, payment_method_types = ['card'], customer_id = nil,
-                          metadata = {}, currency = 'usd', shipping = nil, return_url = nil, confirm = false)
+def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, payment_method_types: nil, customer_id: nil,
+                          metadata: {}, currency: nil, shipping: nil, return_url: nil, confirm: false)
   return Stripe::PaymentIntent.create(
     :amount => amount,
     :currency => currency || 'usd',
     :customer => customer_id,
     :source => source_id,
     :payment_method => payment_method_id,
-    :payment_method_types => payment_method_types,
+    :payment_method_types => payment_method_types || ['card'],
     :description => "Example PaymentIntent",
     :shipping => shipping,
     :return_url => return_url,
