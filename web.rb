@@ -193,15 +193,13 @@ post '/create_payment_intent' do
       payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
     else
       payment_intent = create_payment_intent(
-        params[:amount] || 100, # Sending the amount from the client is a security hazard, this is for demo purposes only
-        nil,
-        nil,
-        params[:payment_method_types] || ['card'],
-        nil,
-        params[:metadata],
-        params[:currency],
-        nil,
-        nil
+        amount: params[:amount] || 100, # Sending the amount from the client is a security hazard, this is for demo purposes only
+        source_id: nil,
+        payment_method_id: nil,
+        payment_method_types: params[:payment_method_types] || ['card'],
+        customer_id: params[:customer_id] || @customer.id,
+        metadata: params[:metadata],
+        currency: params[:currency],
       )
     end
   rescue Stripe::StripeError => e
