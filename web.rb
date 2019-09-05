@@ -94,37 +94,6 @@ def create_customer
   )
 end
 
-# This endpoint is used by the mobile example apps to create a SetupIntent.
-# https://stripe.com/docs/api/setup_intents/create
-# Just like the `/capture_payment` endpoint, a real implementation would include controls
-# to prevent misuse
-post '/create_setup_intent' do
-  payload = params
-  if request.content_type != nil and request.content_type.include? 'application/json' and params.empty?
-      payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
-  end
-  begin
-    setup_intent = Stripe::SetupIntent.create({
-      payment_method: payload[:payment_method],
-      return_url: payload[:return_url],
-      confirm: payload[:payment_method] != nil,
-      customer: payload[:customer_id],
-      use_stripe_sdk: payload[:payment_method] != nil ? true : nil,
-    })
-  rescue Stripe::StripeError => e
-    status 402
-    return log_info("Error creating SetupIntent: #{e.message}")
-  end
-
-  log_info("SetupIntent successfully created: #{setup_intent.id}")
-  status 200
-  return {
-    :intent => setup_intent.id,
-    :secret => setup_intent.client_secret,
-    :status => setup_intent.status
-  }.to_json
-end
-
 # This endpoint responds to webhooks sent by Stripe. To use it, you'll need
 # to add its URL (https://{your-app-name}.herokuapp.com/stripe-webhook)
 # in the webhook settings section of the Dashboard.
@@ -188,7 +157,40 @@ def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, custo
   )
 end
 
-# ==== Payment Intent Automatic Confirmation
+# ==== SetupIntent 
+# See https://stripe.com/docs/payments/cards/saving-cards-without-payment
+
+# This endpoint is used by the mobile example apps to create a SetupIntent.
+# https://stripe.com/docs/api/setup_intents/create
+# A real implementation would include controls to prevent misuse
+post '/create_setup_intent' do
+  payload = params
+  if request.content_type != nil and request.content_type.include? 'application/json' and params.empty?
+      payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
+  end
+  begin
+    setup_intent = Stripe::SetupIntent.create({
+      payment_method: payload[:payment_method],
+      return_url: payload[:return_url],
+      confirm: payload[:payment_method] != nil,
+      customer: payload[:customer_id],
+      use_stripe_sdk: payload[:payment_method] != nil ? true : nil,
+    })
+  rescue Stripe::StripeError => e
+    status 402
+    return log_info("Error creating SetupIntent: #{e.message}")
+  end
+
+  log_info("SetupIntent successfully created: #{setup_intent.id}")
+  status 200
+  return {
+    :intent => setup_intent.id,
+    :secret => setup_intent.client_secret,
+    :status => setup_intent.status
+  }.to_json
+end
+
+# ==== PaymentIntent Automatic Confirmation
 # See https://stripe.com/docs/payments/payment-intents/ios
 
 # This endpoint is used by the mobile example apps to create a PaymentIntent
@@ -223,7 +225,7 @@ post '/create_payment_intent' do
   }.to_json
 end
 
-# ===== Payment Intent Manual Confirmation 
+# ===== PaymentIntent Manual Confirmation 
 # See https://stripe.com/docs/payments/payment-intents/ios-manual
 
 # This endpoint is used by the mobile example apps to create and confirm a PaymentIntent 
