@@ -37,48 +37,6 @@ post '/ephemeral_keys' do
   key.to_json
 end
 
-# Endpoint used for Payment Intent manual confirmation
-# See: https://stripe.com/docs/payments/payment-intents/ios-manual
-post '/confirm_payment' do
-  payload = params
-  if request.content_type.include? 'application/json' and params.empty?
-    payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
-  end
-
-  begin
-    if payload[:payment_intent_id]
-      # Confirm the PaymentIntent
-      payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id], {:use_stripe_sdk => true})
-    elsif params[:payment_method]
-      authenticate!
-      # Create and confirm the PaymentIntent
-      payment_intent = create_payment_intent(
-        amount: params[:amount],
-        source_id: params[:source],
-        payment_method_id: params[:payment_method],
-        payment_method_types: params[:payment_method_types],
-        customer_id: params[:customer_id] || @customer.id,
-        metadata: params[:metadata],
-        currency: params[:currency],
-        shipping: params[:shipping],
-        return_url: params[:return_url],
-        confirm: true
-      )
-    else
-      status 400
-      return log_info("Error: Missing params. Pass payment_intent_id to confirm or payment_method to create")
-    end 
-  rescue Stripe::StripeError => e
-    status 402
-    return log_info("Error: #{e.message}")
-  end
-
-  status 200
-  return {
-      :secret => payment_intent.client_secret
-  }.to_json
-end
-
 def authenticate!
   # This code simulates "loading the Stripe customer for your current session".
   # Your own logic will likely look very different.
@@ -168,44 +126,6 @@ post '/create_setup_intent' do
   }.to_json
 end
 
-# This endpoint is used by the mobile example apps to create a PaymentIntent.
-# https://stripe.com/docs/api/payment_intents/create
-# Just like the `/capture_payment` endpoint, a real implementation would include controls
-# to prevent misuse
-post '/create_payment_intent' do
-  authenticate!
-  payload = params
-  if request.content_type != nil and request.content_type.include? 'application/json' and params.empty?
-      payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
-  end
-
-  begin
-    payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
-    if payment_intent_id
-      payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
-    else
-      payment_intent = create_payment_intent(
-        amount: payload[:amount] || 1000, # Sending the amount from the client is a security hazard, this is for demo purposes only
-        payment_method_types: payload[:payment_method_types],
-        customer_id: payload[:customer_id] || @customer.id,
-        metadata: payload[:metadata],
-        currency: payload[:currency],
-      )
-    end
-  rescue Stripe::StripeError => e
-    status 402
-    return log_info("Error creating PaymentIntent: #{e.message}")
-  end
-
-  log_info("PaymentIntent successfully created: #{payment_intent.id}")
-  status 200
-  return {
-    :intent => payment_intent.id,
-    :secret => payment_intent.client_secret,
-    :status => payment_intent.status
-  }.to_json
-end
-
 # This endpoint responds to webhooks sent by Stripe. To use it, you'll need
 # to add its URL (https://{your-app-name}.herokuapp.com/stripe-webhook)
 # in the webhook settings section of the Dashboard.
@@ -268,4 +188,107 @@ def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, payme
       :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
     }.merge(metadata || {}),
   )
+end
+
+# ==== Payment Intent Automatic Confirmation
+# See https://stripe.com/docs/payments/payment-intents/ios
+
+# This endpoint is used by the mobile example apps to create a PaymentIntent
+# https://stripe.com/docs/api/payment_intents/create
+# A real implementation would include controls to prevent misuse
+post '/create_payment_intent' do
+  authenticate!
+  payload = params
+  if request.content_type != nil and request.content_type.include? 'application/json' and params.empty?
+      payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
+  end
+
+  begin
+    payment_intent = create_payment_intent(
+      amount: payload[:amount] || 1000, # Sending the amount from the client is a security hazard, this is for demo purposes only
+      customer_id: payload[:customer_id] || @customer.id,
+      metadata: payload[:metadata],
+      currency: payload[:currency],
+    )
+  rescue Stripe::StripeError => e
+    status 402
+    return log_info("Error creating PaymentIntent: #{e.message}")
+  end
+
+  log_info("PaymentIntent successfully created: #{payment_intent.id}")
+  status 200
+  return {
+    :intent => payment_intent.id,
+    :secret => payment_intent.client_secret,
+    :status => payment_intent.status
+  }.to_json
+end
+
+# ===== Payment Intent Manual Confirmation 
+# See https://stripe.com/docs/payments/payment-intents/ios-manual
+
+# This endpoint is used by the mobile example apps to create and confirm a PaymentIntent 
+# using manual confirmation. 
+# https://stripe.com/docs/api/payment_intents/create
+# https://stripe.com/docs/api/payment_intents/confirm
+# A real implementation would include controls to prevent misuse
+post '/manual_confirm_payment' do
+  payload = params
+  if request.content_type.include? 'application/json' and params.empty?
+    payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
+  end
+
+  begin
+    if payload[:payment_intent_id]
+      # Confirm the PaymentIntent
+      payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id], {:use_stripe_sdk => true})
+    elsif params[:payment_method]
+      authenticate!
+      # Create and confirm the PaymentIntent
+      payment_intent = create_payment_intent(
+        amount: 1099,
+        source_id: params[:source],
+        payment_method_id: params[:payment_method],
+        payment_method_types: params[:payment_method_types],
+        customer_id: params[:customer_id] || @customer.id,
+        metadata: params[:metadata],
+        currency: params[:currency],
+        shipping: params[:shipping],
+        return_url: params[:return_url],
+        confirm: true
+      )
+    else
+      status 400
+      return log_info("Error: Missing params. Pass payment_intent_id to confirm or payment_method to create")
+    end 
+  rescue Stripe::StripeError => e
+    status 402
+    return log_info("Error: #{e.message}")
+  end
+
+  return generate_payment_response(intent)
+end
+
+def generate_payment_response(intent)
+  # Note that if your API version is before 2019-02-11, 'requires_action'
+  # appears as 'requires_source_action'.
+  if intent.status == 'requires_action'
+    # Tell the client to handle the action
+    status 200
+    return {
+      requires_action: true,
+      payment_intent_client_secret: intent.client_secret
+    }.to_json
+  elsif intent.status == 'succeeded'
+    # The payment didn’t need any additional actions and is completed!
+    # Handle post-payment fulfillment
+    status 200
+    return {
+      :success => true
+    }.to_json
+  else
+    # Invalid status
+    status 500
+    return "Invalid PaymentIntent status"
+  end
 end
