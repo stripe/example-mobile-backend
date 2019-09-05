@@ -37,33 +37,37 @@ post '/ephemeral_keys' do
   key.to_json
 end
 
-post '/capture_payment' do
-  authenticate!
-  # Get the credit card details submitted
+# Endpoint used for Payment Intent manual confirmation
+# See: https://stripe.com/docs/payments/payment-intents/ios-manual
+post '/confirm_payment' do
   payload = params
   if request.content_type.include? 'application/json' and params.empty?
     payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
   end
 
-  # Create and capture the PaymentIntent via Stripe's API - this will charge the user's card
   begin
-    payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
-    if payment_intent_id
-      payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
-    else
+    if payload[:payment_intent_id]
+      # Confirm the PaymentIntent
+      payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id], {:use_stripe_sdk => true})
+    elsif params[:payment_method]
+      authenticate!
+      # Create and confirm the PaymentIntent
       payment_intent = create_payment_intent(
-        payload[:amount],
-        payload[:source],
-        payload[:payment_method],
-        payload[:payment_method_types] || ['card'],
-        payload[:customer_id] || @customer.id,
-        payload[:metadata],
-        payload[:currency] || 'usd',
-        payload[:shipping],
-        payload[:return_url],
+        amount: params[:amount],
+        source_id: params[:source],
+        payment_method_id: params[:payment_method],
+        payment_method_types: params[:payment_method_types],
+        customer_id: params[:customer_id] || @customer.id,
+        metadata: params[:metadata],
+        currency: params[:currency],
+        shipping: params[:shipping],
+        return_url: params[:return_url],
         confirm: true
       )
-    end
+    else
+      status 400
+      return log_info("Error: Missing params. Pass payment_intent_id to confirm or payment_method to create")
+    end 
   rescue Stripe::StripeError => e
     status 402
     return log_info("Error: #{e.message}")
@@ -73,25 +77,6 @@ post '/capture_payment' do
   return {
       :secret => payment_intent.client_secret
   }.to_json
-end
-
-post '/confirm_payment' do
-    authenticate!
-    payload = params
-    if request.content_type.include? 'application/json' and params.empty?
-        payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
-    end
-    begin
-        payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id], {:use_stripe_sdk => true})
-        rescue Stripe::StripeError => e
-        status 402
-        return log_info("Error: #{e.message}")
-    end
-
-    status 200
-    return {
-        :secret => payment_intent.client_secret
-    }.to_json
 end
 
 def authenticate!
@@ -260,6 +245,11 @@ end
 
 def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, payment_method_types: nil, customer_id: nil,
                           metadata: {}, currency: nil, shipping: nil, return_url: nil, confirm: false)
+  payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
+  if payment_intent_id
+    return Stripe::PaymentIntent.retrieve(payment_intent_id)
+  end
+
   return Stripe::PaymentIntent.create(
     :amount => amount,
     :currency => currency || 'usd',
