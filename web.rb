@@ -225,7 +225,7 @@ post '/create_payment_intent' do
 
   begin
     payment_intent = create_payment_intent(
-      amount: 1099,
+      amount: 1099, # A real implementation would calculate the amount based on e.g. an order id
       source_id: params[:source],
       customer_id: payload[:customer_id] || @customer.id,
       metadata: payload[:metadata],
@@ -267,7 +267,7 @@ post '/manual_confirm_payment' do
       authenticate!
       # Create and confirm the PaymentIntent
       payment_intent = create_payment_intent(
-        amount: 1099,
+        amount: 1099, # A real implementation would calculate the amount based on e.g. an order id
         source_id: params[:source],
         payment_method_id: params[:payment_method],
         customer_id: params[:customer_id] || @customer.id,
