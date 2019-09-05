@@ -98,35 +98,55 @@ end
 # to add its URL (https://{your-app-name}.herokuapp.com/stripe-webhook)
 # in the webhook settings section of the Dashboard.
 # https://dashboard.stripe.com/account/webhooks
+# See https://stripe.com/docs/webhooks
 post '/stripe-webhook' do
-  json = JSON.parse(request.body.read)
-
   # Retrieving the event from Stripe guarantees its authenticity
-  event = Stripe::Event.retrieve(json["id"])
-  source = event.data.object
+  payload = request.body.read
+  event = nil
 
-  # For sources that require additional user action from your customer
-  # (e.g. authorizing the payment with their bank), you should use webhooks
-  # to capture a PaymentIntent after the source becomes chargeable.
-  # For more information, see https://stripe.com/docs/sources#best-practices
-  WEBHOOK_CHARGE_CREATION_TYPES = ['bancontact', 'giropay', 'ideal', 'sofort', 'three_d_secure']
-  if event.type == 'source.chargeable' && WEBHOOK_CHARGE_CREATION_TYPES.include?(source.type)
-    begin
-      create_payment_intent(
-        amount: source.amount,
-        customer_id: source.metadata["customer"],
-        metadata: source.metadata,
-        currency: source.currency,
-        confirm: true,
+  begin
+      event = Stripe::Event.construct_from(
+          JSON.parse(payload, symbolize_names: true)
       )
-    rescue Stripe::StripeError => e
-      return log_info("Error creating PaymentIntent: #{e.message}")
+  rescue JSON::ParserError => e
+      # Invalid payload
+      status 400
+      return
+  end
+
+  # Handle the event
+  case event.type
+  when 'source.chargeable'
+    # For sources that require additional user action from your customer
+    # (e.g. authorizing the payment with their bank), you should use webhooks
+    # to capture a PaymentIntent after the source becomes chargeable.
+    # For more information, see https://stripe.com/docs/sources#best-practices
+    source = event.data.object # contains a Stripe::Source
+    WEBHOOK_CHARGE_CREATION_TYPES = ['bancontact', 'giropay', 'ideal', 'sofort', 'three_d_secure', 'wechat']
+    if WEBHOOK_CHARGE_CREATION_TYPES.include?(source.type)
+      begin
+        create_payment_intent(
+          amount: source.amount,
+          customer_id: source.metadata["customer"],
+          metadata: source.metadata,
+          currency: source.currency,
+          confirm: true,
+        )
+      rescue Stripe::StripeError => e
+        return log_info("Error creating PaymentIntent: #{e.message}")
+      end 
     end
-    # After successfully capturing a PaymentIntent, you should complete your customer's
-    # order and notify them that their order has been fulfilled (e.g. by sending
-    # an email). When creating the source in your app, consider storing any order
+  when 'payment_intent.succeeded'
+    payment_intent = event.data.object # contains a Stripe::PaymentIntent
+    log_info("PaymentIntent succeeded #{payment_intent.id}")
+    # Fulfill the customer's purchase, send an email, etc.
+    # When creating the PaymentIntent, consider storing any order
     # information (e.g. order number) as metadata so that you can retrieve it
     # here and use it to complete your customer's purchase.
+  else
+    # Unexpected event type
+    status 400
+    return
   end
   status 200
 end
