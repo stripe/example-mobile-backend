@@ -203,7 +203,7 @@ post '/create_payment_intent' do
 
   begin
     payment_intent = create_payment_intent(
-      amount: payload[:amount] || 1000, # Sending the amount from the client is a security hazard, this is for demo purposes only
+      amount: 1099,
       customer_id: payload[:customer_id] || @customer.id,
       metadata: payload[:metadata],
       currency: payload[:currency],
