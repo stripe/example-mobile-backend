@@ -105,7 +105,6 @@ post '/create_setup_intent' do
   end
   begin
     setup_intent = Stripe::SetupIntent.create({
-      payment_method_types: payload[:payment_method_types] || ['card'],
       payment_method: payload[:payment_method],
       return_url: payload[:return_url],
       confirm: payload[:payment_method] != nil,
@@ -163,7 +162,7 @@ post '/stripe-webhook' do
   status 200
 end
 
-def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, payment_method_types: nil, customer_id: nil,
+def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, customer_id: nil,
                           metadata: {}, currency: nil, shipping: nil, return_url: nil, confirm: false)
   payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
   if payment_intent_id
@@ -176,7 +175,6 @@ def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, payme
     :customer => customer_id,
     :source => source_id,
     :payment_method => payment_method_id,
-    :payment_method_types => payment_method_types || ['card'],
     :description => "Example PaymentIntent",
     :shipping => shipping,
     :return_url => return_url,
@@ -249,7 +247,6 @@ post '/manual_confirm_payment' do
         amount: 1099,
         source_id: params[:source],
         payment_method_id: params[:payment_method],
-        payment_method_types: params[:payment_method_types],
         customer_id: params[:customer_id] || @customer.id,
         metadata: params[:metadata],
         currency: params[:currency],
