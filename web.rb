@@ -51,7 +51,7 @@ post '/capture_payment' do
     if payment_intent_id
       payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
     else
-      payment_intent = create_and_capture_payment_intent(
+      payment_intent = create_payment_intent(
         payload[:amount],
         payload[:source],
         payload[:payment_method],
@@ -61,6 +61,7 @@ post '/capture_payment' do
         payload[:currency] || 'usd',
         payload[:shipping],
         payload[:return_url],
+        confirm: true
       )
     end
   rescue Stripe::StripeError => e
@@ -238,16 +239,12 @@ post '/stripe-webhook' do
   WEBHOOK_CHARGE_CREATION_TYPES = ['bancontact', 'giropay', 'ideal', 'sofort', 'three_d_secure']
   if event.type == 'source.chargeable' && WEBHOOK_CHARGE_CREATION_TYPES.include?(source.type)
     begin
-      create_and_capture_payment_intent(
-        source.amount,
-        source.id,
-        nil,
-        ['card'],
-        source.metadata["customer"],
-        source.metadata,
-        source.currency,
-        nil,
-        nil
+      create_payment_intent(
+        amount: source.amount,
+        customer_id: source.metadata["customer"],
+        metadata: source.metadata,
+        currency: source.currency,
+        confirm: true,
       )
     rescue Stripe::StripeError => e
       return log_info("Error creating PaymentIntent: #{e.message}")
@@ -281,11 +278,4 @@ def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, payme
       :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
     }.merge(metadata || {}),
   )
-end
-
-def create_and_capture_payment_intent(amount, source_id, payment_method_id, payment_method_types = ['card'],
-                                      customer_id = nil, metadata = {}, currency = 'usd', shipping = nil,
-                                      return_url = nil)
-  return create_payment_intent(amount, source_id, payment_method_id, payment_method_types,
-                               customer_id, metadata, currency, shipping, return_url, true)
 end
