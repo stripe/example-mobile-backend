@@ -204,6 +204,7 @@ post '/create_payment_intent' do
   begin
     payment_intent = create_payment_intent(
       amount: 1099,
+      source_id: params[:source],
       customer_id: payload[:customer_id] || @customer.id,
       metadata: payload[:metadata],
       currency: payload[:currency],
