@@ -125,16 +125,20 @@ post '/stripe-webhook' do
     WEBHOOK_CHARGE_CREATION_TYPES = ['bancontact', 'giropay', 'ideal', 'sofort', 'three_d_secure', 'wechat']
     if WEBHOOK_CHARGE_CREATION_TYPES.include?(source.type)
       begin
-        create_payment_intent(
+        payment_intent = create_payment_intent(
           amount: source.amount,
+          source_id: source.id,
           customer_id: source.metadata["customer"],
           metadata: source.metadata,
           currency: source.currency,
+          payment_method_types: [source.type],
           confirm: true,
         )
       rescue Stripe::StripeError => e
+        status 400
         return log_info("Error creating PaymentIntent: #{e.message}")
       end 
+      return log_info("Created PaymentIntent for source: #{payment_intent.id}")
     end
   when 'payment_intent.succeeded'
     payment_intent = event.data.object # contains a Stripe::PaymentIntent
@@ -143,6 +147,10 @@ post '/stripe-webhook' do
     # When creating the PaymentIntent, consider storing any order
     # information (e.g. order number) as metadata so that you can retrieve it
     # here and use it to complete your customer's purchase.
+  when 'payment_intent.amount_capturable_updated'
+    # Capture the payment, then fulfill the customer's purchase like above.
+    payment_intent = event.data.object # contains a Stripe::PaymentIntent
+    log_info("PaymentIntent succeeded #{payment_intent.id}")
   else
     # Unexpected event type
     status 400
@@ -152,7 +160,7 @@ post '/stripe-webhook' do
 end
 
 def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, customer_id: nil,
-                          metadata: {}, currency: nil, shipping: nil, return_url: nil, confirm: false)
+                          metadata: {}, currency: nil, shipping: nil, return_url: nil, payment_method_types: nil, confirm: false)
   payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
   if payment_intent_id
     return Stripe::PaymentIntent.retrieve(payment_intent_id)
@@ -164,6 +172,7 @@ def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, custo
     :customer => customer_id,
     :source => source_id,
     :payment_method => payment_method_id,
+    :payment_method_types => payment_method_types,
     :description => "Example PaymentIntent",
     :shipping => shipping,
     :return_url => return_url,
@@ -226,7 +235,7 @@ post '/create_payment_intent' do
   begin
     payment_intent = create_payment_intent(
       amount: 1099, # A real implementation would calculate the amount based on e.g. an order id
-      source_id: params[:source],
+      source_id: payload[:source],
       customer_id: payload[:customer_id] || @customer.id,
       metadata: payload[:metadata],
       currency: payload[:currency],
@@ -263,18 +272,18 @@ post '/confirm_payment_intent' do
     if payload[:payment_intent_id]
       # Confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id], {:use_stripe_sdk => true})
-    elsif params[:payment_method]
+    elsif payload[:payment_method]
       authenticate!
       # Create and confirm the PaymentIntent
       payment_intent = create_payment_intent(
         amount: 1099, # A real implementation would calculate the amount based on e.g. an order id
-        source_id: params[:source],
-        payment_method_id: params[:payment_method],
-        customer_id: params[:customer_id] || @customer.id,
-        metadata: params[:metadata],
-        currency: params[:currency],
-        shipping: params[:shipping],
-        return_url: params[:return_url],
+        source_id: payload[:source],
+        payment_method_id: payload[:payment_method],
+        customer_id: payload[:customer_id] || @customer.id,
+        metadata: payload[:metadata],
+        currency: payload[:currency],
+        shipping: payload[:shipping],
+        return_url: payload[:return_url],
         confirm: true
       )
     else
@@ -286,20 +295,21 @@ post '/confirm_payment_intent' do
     return log_info("Error: #{e.message}")
   end
 
-  return generate_payment_response(intent)
+  return generate_payment_response(payment_intent)
 end
 
-def generate_payment_response(intent)
+def generate_payment_response(payment_intent)
   # Note that if your API version is before 2019-02-11, 'requires_action'
   # appears as 'requires_source_action'.
-  if intent.status == 'requires_action'
+  if payment_intent.status == 'requires_action'
     # Tell the client to handle the action
     status 200
     return {
       requires_action: true,
-      payment_intent_client_secret: intent.client_secret
+      secret: payment_intent.client_secret
     }.to_json
-  elsif intent.status == 'succeeded'
+  elsif payment_intent.status == 'succeeded' or 
+    (payment_intent.status == 'requires_capture' and ENV['CAPTURE_METHOD'] == "manual")
     # The payment didn’t need any additional actions and is completed!
     # Handle post-payment fulfillment
     status 200
