@@ -253,7 +253,7 @@ end
 # https://stripe.com/docs/api/payment_intents/create
 # https://stripe.com/docs/api/payment_intents/confirm
 # A real implementation would include controls to prevent misuse
-post '/manual_confirm_payment' do
+post '/confirm_payment_intent' do
   payload = params
   if request.content_type.include? 'application/json' and params.empty?
     payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
