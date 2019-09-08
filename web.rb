@@ -4,6 +4,8 @@ require 'dotenv'
 require 'json'
 require 'encrypted_cookie'
 
+$stdout.sync = true # Get puts to show up in heroku logs
+
 Dotenv.load
 Stripe.api_key = ENV['STRIPE_TEST_SECRET_KEY']
 
@@ -228,17 +230,20 @@ end
 post '/create_payment_intent' do
   authenticate!
   payload = params
+
   if request.content_type != nil and request.content_type.include? 'application/json' and params.empty?
       payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
   end
 
   begin
-    payment_intent = create_payment_intent(
-      amount: 1099, # A real implementation would calculate the amount based on e.g. an order id
-      source_id: payload[:source],
-      customer_id: payload[:customer_id] || @customer.id,
-      metadata: payload[:metadata],
-      currency: payload[:currency],
+    payment_intent = Stripe::PaymentIntent.create(
+      :amount => 1099, # A real implementation would calculate the amount based on e.g. an order id
+      :currency => payload[:currency] || 'usd',
+      :description => "Example PaymentIntent",
+      :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
+      :metadata => {
+        :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
+      }.merge(payload[:metadata] || {}),
     )
   rescue Stripe::StripeError => e
     status 402
@@ -275,16 +280,22 @@ post '/confirm_payment_intent' do
     elsif payload[:payment_method]
       authenticate!
       # Create and confirm the PaymentIntent
-      payment_intent = create_payment_intent(
-        amount: 1099, # A real implementation would calculate the amount based on e.g. an order id
-        source_id: payload[:source],
-        payment_method_id: payload[:payment_method],
-        customer_id: payload[:customer_id] || @customer.id,
-        metadata: payload[:metadata],
-        currency: payload[:currency],
-        shipping: payload[:shipping],
-        return_url: payload[:return_url],
-        confirm: true
+      payment_intent = Stripe::PaymentIntent.create(
+        :amount => 1099, # A real implementation would calculate the amount based on e.g. an order id
+        :currency => payload[:currency] || 'usd',
+        :customer_id => payload[:customer_id] || @customer.id,
+        :source => payload[:source],
+        :payment_method => payload[:payment_method],
+        :description => "Example PaymentIntent",
+        :shipping => payload[:shipping],
+        :return_url => payload[:return_url],
+        :confirm => true,
+        :confirmation_method => "manual",
+        :use_stripe_sdk => true, # You must set this for the mobile apps to handle native authentication for SCA
+        :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
+        :metadata => {
+          :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
+        }.merge(payload[:metadata] || {}),
       )
     else
       status 400
