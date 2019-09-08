@@ -138,13 +138,13 @@ post '/stripe-webhook' do
         )
       rescue Stripe::StripeError => e
         status 400
-        return log_info("Error creating PaymentIntent: #{e.message}")
+        return log_info("Webhook: Error creating PaymentIntent: #{e.message}")
       end 
-      return log_info("Created PaymentIntent for source: #{payment_intent.id}")
+      return log_info("Webhook: Created PaymentIntent for source: #{payment_intent.id}")
     end
   when 'payment_intent.succeeded'
     payment_intent = event.data.object # contains a Stripe::PaymentIntent
-    log_info("PaymentIntent succeeded #{payment_intent.id}")
+    log_info("Webhook: PaymentIntent succeeded #{payment_intent.id}")
     # Fulfill the customer's purchase, send an email, etc.
     # When creating the PaymentIntent, consider storing any order
     # information (e.g. order number) as metadata so that you can retrieve it
@@ -152,7 +152,7 @@ post '/stripe-webhook' do
   when 'payment_intent.amount_capturable_updated'
     # Capture the payment, then fulfill the customer's purchase like above.
     payment_intent = event.data.object # contains a Stripe::PaymentIntent
-    log_info("PaymentIntent succeeded #{payment_intent.id}")
+    log_info("Webhook: PaymentIntent succeeded #{payment_intent.id}")
   else
     # Unexpected event type
     status 400
@@ -239,6 +239,7 @@ post '/create_payment_intent' do
     payment_intent = Stripe::PaymentIntent.create(
       :amount => 1099, # A real implementation would calculate the amount based on e.g. an order id
       :currency => payload[:currency] || 'usd',
+      :customer => payload[:customer_id] || @customer.id,
       :description => "Example PaymentIntent",
       :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
       :metadata => {
@@ -268,6 +269,7 @@ end
 # https://stripe.com/docs/api/payment_intents/confirm
 # A real implementation would include controls to prevent misuse
 post '/confirm_payment_intent' do
+  authenticate!
   payload = params
   if request.content_type.include? 'application/json' and params.empty?
     payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
@@ -278,12 +280,11 @@ post '/confirm_payment_intent' do
       # Confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id], {:use_stripe_sdk => true})
     elsif payload[:payment_method]
-      authenticate!
       # Create and confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.create(
         :amount => 1099, # A real implementation would calculate the amount based on e.g. an order id
         :currency => payload[:currency] || 'usd',
-        :customer_id => payload[:customer_id] || @customer.id,
+        :customer => payload[:customer_id] || @customer.id,
         :source => payload[:source],
         :payment_method => payload[:payment_method],
         :description => "Example PaymentIntent",
