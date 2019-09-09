@@ -127,14 +127,14 @@ post '/stripe-webhook' do
     WEBHOOK_CHARGE_CREATION_TYPES = ['bancontact', 'giropay', 'ideal', 'sofort', 'three_d_secure', 'wechat']
     if WEBHOOK_CHARGE_CREATION_TYPES.include?(source.type)
       begin
-        payment_intent = create_payment_intent(
-          amount: source.amount,
-          source_id: source.id,
-          customer_id: source.metadata["customer"],
-          metadata: source.metadata,
-          currency: source.currency,
-          payment_method_types: [source.type],
-          confirm: true,
+        payment_intent = Stripe::PaymentIntent.create(
+          :amount => source.amount,
+          :currency => source.currency,
+          :source => source.id,
+          :payment_method_types => [source.type],
+          :description => "PaymentIntent for Source webhook",
+          :confirm => true,
+          :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
         )
       rescue Stripe::StripeError => e
         status 400
@@ -159,33 +159,6 @@ post '/stripe-webhook' do
     return
   end
   status 200
-end
-
-def create_payment_intent(amount:, source_id: nil, payment_method_id: nil, customer_id: nil,
-                          metadata: {}, currency: nil, shipping: nil, return_url: nil, payment_method_types: nil, confirm: false)
-  payment_intent_id = ENV['DEFAULT_PAYMENT_INTENT_ID']
-  if payment_intent_id
-    return Stripe::PaymentIntent.retrieve(payment_intent_id)
-  end
-
-  return Stripe::PaymentIntent.create(
-    :amount => amount,
-    :currency => currency || 'usd',
-    :customer => customer_id,
-    :source => source_id,
-    :payment_method => payment_method_id,
-    :payment_method_types => payment_method_types,
-    :description => "Example PaymentIntent",
-    :shipping => shipping,
-    :return_url => return_url,
-    :confirm => confirm,
-    :confirmation_method => confirm ? "manual" : "automatic",
-    :use_stripe_sdk => confirm ? true : nil,
-    :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
-    :metadata => {
-      :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
-    }.merge(metadata || {}),
-  )
 end
 
 # ==== SetupIntent 
@@ -279,20 +252,22 @@ post '/confirm_payment_intent' do
     if payload[:payment_intent_id]
       # Confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id], {:use_stripe_sdk => true})
-    elsif payload[:payment_method]
+    elsif payload[:payment_method_id]
       # Create and confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.create(
         :amount => 1099, # A real implementation would calculate the amount based on e.g. an order id
         :currency => payload[:currency] || 'usd',
         :customer => payload[:customer_id] || @customer.id,
         :source => payload[:source],
-        :payment_method => payload[:payment_method],
+        :payment_method => payload[:payment_method_id],
         :description => "Example PaymentIntent",
         :shipping => payload[:shipping],
         :return_url => payload[:return_url],
         :confirm => true,
         :confirmation_method => "manual",
-        :use_stripe_sdk => true, # You must set this for the mobile apps to handle native authentication for SCA
+        # Set use_stripe_sdk for mobile apps using Stripe iOS SDK v16.0.0+ or Stripe Android SDK v10.0.0+ 
+        # Do not set this on apps using Stripe SDK versions below this.
+        :use_stripe_sdk => true, 
         :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
         :metadata => {
           :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
