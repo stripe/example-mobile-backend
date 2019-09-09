@@ -211,7 +211,7 @@ post '/create_payment_intent' do
   begin
     payment_intent = Stripe::PaymentIntent.create(
       :amount => 1099, # A real implementation would calculate the amount based on e.g. an order id
-      :currency => payload[:currency] || 'usd',
+      :currency => 'usd',
       :customer => payload[:customer_id] || @customer.id,
       :description => "Example PaymentIntent",
       :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
@@ -256,7 +256,7 @@ post '/confirm_payment_intent' do
       # Create and confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.create(
         :amount => 1099, # A real implementation would calculate the amount based on e.g. an order id
-        :currency => payload[:currency] || 'usd',
+        :currency => 'usd',
         :customer => payload[:customer_id] || @customer.id,
         :source => payload[:source],
         :payment_method => payload[:payment_method_id],
