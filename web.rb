@@ -17,6 +17,25 @@ def log_info(message)
   return message
 end
 
+EMOJI_STORE = {
+  "👕" => 2000,
+  "👖" => 4000,
+  "👗" => 3000,
+  "👞" => 700,
+  "👟" => 600,
+  "👠" => 1000,
+  "👡" => 2000,
+  "👢" => 2500,
+  "👒" => 800,
+  "👙" => 3000,
+  "💄" => 2000,
+  "🎩" => 5000,
+  "👛" => 5500,
+  "👜" => 6000,
+  "🕶" => 2000,
+  "👚" => 2500,
+}
+
 get '/' do
   status 200
   return log_info("Great, your backend is set up. Now you can configure the Stripe example apps to point here.")
@@ -208,9 +227,26 @@ post '/create_payment_intent' do
       payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
   end
 
+  amount = 1099  # Default amount.
+  
+  # If the client has sent us products, we'll reprice based on those:
+  if payload[:products]
+    amount = payload[:products].reduce(0) { | sum, product | sum + EMOJI_STORE[product] }
+  end
+  if payload[:shipping]
+    case payload[:shipping]
+    when "fedex"
+      amount = amount + 599
+    when "fedex_world"
+      amount = amount + 2099
+    when "ups_worldwide"
+      amount = amount + 1099
+    end
+  end
+
   begin
     payment_intent = Stripe::PaymentIntent.create(
-      :amount => 1099, # A real implementation would calculate the amount based on e.g. an order id
+      :amount => amount,
       :currency => 'usd',
       :customer => payload[:customer_id] || @customer.id,
       :description => "Example PaymentIntent",
