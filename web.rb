@@ -17,25 +17,6 @@ def log_info(message)
   return message
 end
 
-EMOJI_STORE = {
-  "👕" => 2000,
-  "👖" => 4000,
-  "👗" => 3000,
-  "👞" => 700,
-  "👟" => 600,
-  "👠" => 1000,
-  "👡" => 2000,
-  "👢" => 2500,
-  "👒" => 800,
-  "👙" => 3000,
-  "💄" => 2000,
-  "🎩" => 5000,
-  "👛" => 5500,
-  "👜" => 6000,
-  "🕶" => 2000,
-  "👚" => 2500,
-}
-
 get '/' do
   status 200
   return log_info("Great, your backend is set up. Now you can configure the Stripe example apps to point here.")
@@ -228,21 +209,8 @@ post '/create_payment_intent' do
   end
 
   amount = 1099  # Default amount.
-  
   # If the client has sent us products, we'll reprice based on those:
-  if payload[:products]
-    amount = payload[:products].reduce(0) { | sum, product | sum + EMOJI_STORE[product] }
-  end
-  if payload[:shipping]
-    case payload[:shipping]
-    when "fedex"
-      amount = amount + 599
-    when "fedex_world"
-      amount = amount + 2099
-    when "ups_worldwide"
-      amount = amount + 1099
-    end
-  end
+  amount = calculate_price(payload[:products], payload[:shipping])
 
   begin
     payment_intent = Stripe::PaymentIntent.create(
@@ -344,4 +312,45 @@ def generate_payment_response(payment_intent)
     status 500
     return "Invalid PaymentIntent status"
   end
+end
+
+# Our example apps sell emoji apparel; this hash lets us calculate the total amount to charge.
+EMOJI_STORE = {
+  "👕" => 2000,
+  "👖" => 4000,
+  "👗" => 3000,
+  "👞" => 700,
+  "👟" => 600,
+  "👠" => 1000,
+  "👡" => 2000,
+  "👢" => 2500,
+  "👒" => 800,
+  "👙" => 3000,
+  "💄" => 2000,
+  "🎩" => 5000,
+  "👛" => 5500,
+  "👜" => 6000,
+  "🕶" => 2000,
+  "👚" => 2500,
+}
+
+def calculate_price(products, shipping)
+  amount = 0
+
+  if products
+    amount = products.reduce(0) { | sum, product | sum + EMOJI_STORE[product] }
+  end
+
+  if shipping
+    case shipping
+    when "fedex"
+      amount = amount + 599
+    when "fedex_world"
+      amount = amount + 2099
+    when "ups_worldwide"
+      amount = amount + 1099
+    end
+  end
+
+  return amount
 end
