@@ -313,7 +313,6 @@ def generate_payment_response(payment_intent)
     return "Invalid PaymentIntent status"
   end
 end
-<<<<<<< HEAD
 
 # Our example apps sell emoji apparel; this hash lets us calculate the total amount to charge.
 EMOJI_STORE = {
@@ -355,5 +354,3 @@ def calculate_price(products, shipping)
 
   return amount
 end
-=======
->>>>>>> 805979bd31e203abb9b48bbbed57d0d9ab4749e9
