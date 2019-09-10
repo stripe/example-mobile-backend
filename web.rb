@@ -17,6 +17,7 @@ def log_info(message)
   return message
 end
 
+## Our example apps sell emoji apparel; this hash lets us calculate the total amount to charge.
 EMOJI_STORE = {
   "👕" => 2000,
   "👖" => 4000,
