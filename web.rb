@@ -60,7 +60,7 @@ def authenticate!
         # Attach some test cards to the customer for testing convenience.
         # See https://stripe.com/docs/payments/3d-secure#three-ds-cards 
         # and https://stripe.com/docs/mobile/android/authentication#testing
-        ['4000000000003220', '4000000000003238', '4000000000003246', '4000000000003253', '4242424242424242'].each { |cc_number|
+        ['4000000000003220', '4000000000003063', '4000000000003238', '4000000000003246', '4000000000003253', '4242424242424242'].each { |cc_number|
           payment_method = Stripe::PaymentMethod.create({
             type: 'card',
             card: {
