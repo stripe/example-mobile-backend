@@ -208,8 +208,7 @@ post '/create_payment_intent' do
       payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
   end
 
-  amount = 1099  # Default amount.
-  # If the client has sent us products, we'll reprice based on those:
+  # Calculate how much to charge the customer
   amount = calculate_price(payload[:products], payload[:shipping])
 
   begin
@@ -257,9 +256,12 @@ post '/confirm_payment_intent' do
       # Confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id], {:use_stripe_sdk => true})
     elsif payload[:payment_method_id]
+      # Calculate how much to charge the customer
+      amount = calculate_price(payload[:products], payload[:shipping])
+
       # Create and confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.create(
-        :amount => 1099, # A real implementation would calculate the amount based on e.g. an order id
+        :amount => amount,
         :currency => 'usd',
         :customer => payload[:customer_id] || @customer.id,
         :source => payload[:source],
@@ -314,6 +316,8 @@ def generate_payment_response(payment_intent)
   end
 end
 
+# ===== Helpers
+
 # Our example apps sell emoji apparel; this hash lets us calculate the total amount to charge.
 EMOJI_STORE = {
   "👕" => 2000,
@@ -335,7 +339,7 @@ EMOJI_STORE = {
 }
 
 def calculate_price(products, shipping)
-  amount = 0
+  amount = 1099  # Default amount.
 
   if products
     amount = products.reduce(0) { | sum, product | sum + EMOJI_STORE[product] }
