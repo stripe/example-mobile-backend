@@ -214,10 +214,11 @@ post '/create_payment_intent' do
   begin
     payment_intent = Stripe::PaymentIntent.create(
       :amount => amount,
-      :currency => 'usd',
+      :currency => currency_for_country(payload[:country]),
       :customer => payload[:customer_id] || @customer.id,
       :description => "Example PaymentIntent",
       :capture_method => ENV['CAPTURE_METHOD'] == "manual" ? "manual" : "automatic",
+      payment_method_types: payment_methods_for_country(payload[:country]),
       :metadata => {
         :order_id => '5278735C-1F40-407D-933A-286E463E72D8',
       }.merge(payload[:metadata] || {}),
@@ -262,7 +263,7 @@ post '/confirm_payment_intent' do
       # Create and confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.create(
         :amount => amount,
-        :currency => 'usd',
+        :currency => currency_for_country(payload[:country]),
         :customer => payload[:customer_id] || @customer.id,
         :source => payload[:source],
         :payment_method => payload[:payment_method_id],
@@ -357,4 +358,29 @@ def calculate_price(products, shipping)
   end
 
   return amount
+end
+
+def currency_for_country(country)
+  # Determine currency to use. Generally a store would charge different prices for
+  # different countries, but for the sake of simplicity we'll charge X of the local currency.
+
+  case country
+  when 'us'
+    'usd'
+  when 'my'
+    'myr'
+  else
+    'usd'
+  end
+end
+
+def payment_methods_for_country(country)
+  case country
+  when 'us'
+    ['card']
+  when 'my'
+    ['card', 'fpx']
+  else
+    ['card']
+  end
 end
