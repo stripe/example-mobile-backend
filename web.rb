@@ -369,6 +369,8 @@ def currency_for_country(country)
     'usd'
   when 'my'
     'myr'
+  when 'nl'
+    'eur'
   else
     'usd'
   end
@@ -380,6 +382,8 @@ def payment_methods_for_country(country)
     ['card']
   when 'my'
     ['card', 'fpx']
+  when 'nl'
+    ['card', 'ideal', 'sepa_debit']
   else
     ['card']
   end
