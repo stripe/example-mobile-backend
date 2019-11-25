@@ -341,11 +341,17 @@ EMOJI_STORE = {
   "👚" => 2500,
 }
 
+def price_lookup(product)
+  price = EMOJI_STORE[product]
+  raise "Can't find price for %s (%s)" % [product, product.ord.to_s(16)] if price.nil?
+  return price
+end
+
 def calculate_price(products, shipping)
   amount = 1099  # Default amount.
 
   if products
-    amount = products.reduce(0) { | sum, product | sum + EMOJI_STORE[product] }
+    amount = products.reduce(0) { | sum, product | sum + price_lookup(product) }
   end
 
   if shipping
