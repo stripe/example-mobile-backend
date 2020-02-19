@@ -50,9 +50,9 @@ def authenticate!
     rescue Stripe::InvalidRequestError
     end
   else
-    default_cusomer_id = ENV['DEFAULT_CUSTOMER_ID']
-    if default_cusomer_id
-      @customer = Stripe::Customer.retrieve(default_cusomer_id)
+    default_customer_id = ENV['DEFAULT_CUSTOMER_ID']
+    if default_customer_id
+      @customer = Stripe::Customer.retrieve(default_customer_id)
     else
       begin
         @customer = create_customer()
