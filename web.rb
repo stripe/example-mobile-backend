@@ -381,6 +381,8 @@ def currency_for_country(country)
     'eur'
   when 'au'
     'aud'
+  when 'gb'
+    'gbp'
   else
     'usd'
   end
@@ -402,4 +404,3 @@ def payment_methods_for_country(country)
     ['card']
   end
 end
-
