@@ -396,6 +396,8 @@ def payment_methods_for_country(country)
     ['card', 'ideal', 'sepa_debit']
   when 'au'
     ['card', 'au_becs_debit']
+  when 'gb'
+    ['card', 'bacs_debit']
   else
     ['card']
   end
