@@ -377,7 +377,7 @@ def currency_for_country(country)
     'usd'
   when 'my'
     'myr'
-  when 'nl'
+  when 'at', 'be', 'de', 'es', 'it', 'nl'
     'eur'
   when 'au'
     'aud'
@@ -395,11 +395,13 @@ def payment_methods_for_country(country)
   when 'my'
     ['card', 'fpx']
   when 'nl'
-    ['card', 'ideal', 'sepa_debit']
+    ['card', 'ideal', 'sepa_debit', 'sofort']
   when 'au'
     ['card', 'au_becs_debit']
   when 'gb'
     ['card', 'bacs_debit']
+  when 'at', 'be', 'de', 'es', 'it'
+    ['card', 'sofort']
   else
     ['card']
   end
