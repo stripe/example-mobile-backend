@@ -375,6 +375,8 @@ def currency_for_country(country)
   case country
   when 'us'
     'usd'
+  when 'mx'
+    'mxn'
   when 'my'
     'myr'
   when 'at', 'be', 'de', 'es', 'it', 'nl'
@@ -392,6 +394,8 @@ def payment_methods_for_country(country)
   case country
   when 'us'
     ['card']
+  when 'mx'
+    ['card', 'oxxo']
   when 'my'
     ['card', 'fpx']
   when 'nl'
