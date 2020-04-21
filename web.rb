@@ -179,7 +179,7 @@ post '/create_setup_intent' do
       confirm: payload[:payment_method] != nil,
       customer: payload[:customer_id],
       use_stripe_sdk: payload[:payment_method] != nil ? true : nil,
-      payment_method_types: ['card'],
+      payment_method_types: payment_methods_for_country(payload[:country]),
     })
   rescue Stripe::StripeError => e
     status 402
