@@ -379,7 +379,7 @@ def currency_for_country(country)
     'mxn'
   when 'my'
     'myr'
-  when 'at', 'be', 'de', 'es', 'it', 'nl'
+  when 'at', 'be', 'de', 'es', 'it', 'nl', 'pl'
     'eur'
   when 'au'
     'aud'
@@ -393,20 +393,28 @@ end
 def payment_methods_for_country(country)
   case country
   when 'us'
-    ['card']
+    %w[card]
   when 'mx'
-    ['card', 'oxxo']
+    %w[card oxxo]
   when 'my'
-    ['card', 'fpx']
+    %w[card fpx]
   when 'nl'
-    ['card', 'ideal', 'sepa_debit', 'sofort']
+    %w[card ideal sepa_debit sofort]
   when 'au'
-    ['card', 'au_becs_debit']
+    %w[card au_becs_debit]
   when 'gb'
-    ['card', 'bacs_debit']
-  when 'at', 'be', 'de', 'es', 'it'
-    ['card', 'sofort']
+    %w[card bacs_debit]
+  when 'es', 'it'
+    %w[card sofort]
+  when 'pl'
+    %w[card p24]
+  when 'be'
+    %w[card sofort bancontact]
+  when 'de'
+    %w[card sofort giropay]
+  when 'at'
+    %w[card sofort eps]
   else
-    ['card']
+    %w[card]
   end
 end
