@@ -421,6 +421,8 @@ def payment_methods_for_country(country)
     %w[card sofort giropay]
   when 'at'
     %w[card sofort eps]
+  when 'sg'
+    %w[card alipay]
   else
     %w[card]
   end
