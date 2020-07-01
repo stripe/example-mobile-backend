@@ -355,7 +355,7 @@ def price_lookup(product)
 end
 
 def calculate_price(products, shipping)
-  amount = 1099  # Default amount.
+  amount = 1199  # Default amount.
 
   if products
     amount = products.reduce(0) { | sum, product | sum + price_lookup(product) }
