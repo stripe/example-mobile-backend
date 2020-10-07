@@ -410,17 +410,17 @@ def payment_methods_for_country(country)
   when 'au'
     %w[card au_becs_debit]
   when 'gb'
-    %w[card bacs_debit]
+    %w[card paypal bacs_debit]
   when 'es', 'it'
-    %w[card sofort]
+    %w[card paypal sofort]
   when 'pl'
-    %w[card p24]
+    %w[card paypal p24]
   when 'be'
-    %w[card sofort bancontact]
+    %w[card paypal sofort bancontact]
   when 'de'
-    %w[card sofort giropay]
+    %w[card paypal sofort giropay]
   when 'at'
-    %w[card sofort eps]
+    %w[card paypal sofort eps]
   when 'sg'
     %w[card alipay]
   else
