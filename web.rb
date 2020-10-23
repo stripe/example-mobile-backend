@@ -392,6 +392,8 @@ def currency_for_country(country)
     'aud'
   when 'gb'
     'gbp'
+  when 'in'
+    'inr'
   else
     'usd'
   end
@@ -423,6 +425,8 @@ def payment_methods_for_country(country)
     %w[card paypal sofort eps]
   when 'sg'
     %w[card alipay]
+  when 'in'
+    %w[card upi netbanking]
   else
     %w[card]
   end
