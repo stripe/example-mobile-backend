@@ -27,6 +27,7 @@ GEM
 
 PLATFORMS
   ruby
+  x64-mingw32
 
 DEPENDENCIES
   dotenv (= 2.7.4)
@@ -36,7 +37,7 @@ DEPENDENCIES
   stripe (= 4.21.2)
 
 RUBY VERSION
-   ruby 2.6.3p62
+   ruby 2.7.2p137
 
 BUNDLED WITH
-   1.17.3
+   2.2.6
