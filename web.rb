@@ -408,7 +408,7 @@ def payment_methods_for_country(country)
   when 'mx'
     %w[card oxxo]
   when 'my'
-    %w[card fpx]
+    %w[card fpx grabpay]
   when 'nl'
     %w[card ideal sepa_debit sofort]
   when 'au'
@@ -426,7 +426,7 @@ def payment_methods_for_country(country)
   when 'at'
     %w[card paypal sofort eps]
   when 'sg'
-    %w[card alipay]
+    %w[card alipay grabpay]
   when 'in'
     %w[card upi netbanking]
   else
