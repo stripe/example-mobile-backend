@@ -180,6 +180,7 @@ post '/create_setup_intent' do
       payload = Sinatra::IndifferentHash[JSON.parse(request.body.read)]
   end
   begin
+      Stripe.api_version = "2020-08-27;us_bank_account_beta=v2"
     setup_intent = Stripe::SetupIntent.create({
       payment_method: payload[:payment_method],
       return_url: payload[:return_url],
@@ -187,6 +188,7 @@ post '/create_setup_intent' do
       customer: payload[:customer_id],
       use_stripe_sdk: payload[:payment_method] != nil ? true : nil,
       payment_method_types: payment_methods_for_country(payload[:country]),
+                                              
     })
   rescue Stripe::StripeError => e
     status 402
@@ -222,6 +224,7 @@ post '/create_payment_intent' do
   amount = calculate_price(payload[:products], payload[:shipping])
 
   begin
+      Stripe.api_version = "2020-08-27;us_bank_account_beta=v2"
     payment_intent = Stripe::PaymentIntent.create(
       :amount => amount,
       :currency => currency_for_country(payload[:country]),
@@ -263,6 +266,7 @@ post '/confirm_payment_intent' do
   end
 
   begin
+      Stripe.api_version = "2020-08-27;us_bank_account_beta=v2"
     if payload[:payment_intent_id]
       # Confirm the PaymentIntent
       payment_intent = Stripe::PaymentIntent.confirm(payload[:payment_intent_id], {:use_stripe_sdk => true})
