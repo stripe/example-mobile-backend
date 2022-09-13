@@ -89,7 +89,7 @@ def attach_customer_test_cards
       card: {
         number: cc_number,
         exp_month: 8,
-        exp_year: 2022,
+        exp_year: 2032,
         cvc: '123',
       },
     })
