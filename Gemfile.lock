@@ -36,7 +36,7 @@ DEPENDENCIES
   stripe (= 4.21.2)
 
 RUBY VERSION
-   ruby 2.6.6p146
+   ruby 2.5.8p224
 
 BUNDLED WITH
-   1.17.3
+   2.2.29

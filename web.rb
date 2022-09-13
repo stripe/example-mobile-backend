@@ -6,6 +6,8 @@ require 'encrypted_cookie'
 
 $stdout.sync = true # Get puts to show up in heroku logs
 
+set :port, ENV['PORT']
+
 Dotenv.load
 Stripe.api_key = ENV['STRIPE_TEST_SECRET_KEY']
 

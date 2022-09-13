@@ -1,0 +1,22 @@
+{
+  "install": "bundle install",
+  "start": "bundle exec ruby web.rb -o 0.0.0.0",
+  "watch": {
+    "install": {
+      "include": [
+        "^glitch\\.json$",
+        "^Gemfile.lock",
+        "^\\.env$"
+      ]
+    },
+    "restart": {
+      "exclude": [
+        "^vendor/bundle"
+      ],
+      "include": [
+        ".rb$"
+      ]
+    },
+    "throttle": 1000
+  }
+}
