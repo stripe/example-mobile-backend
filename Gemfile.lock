@@ -9,21 +9,23 @@ GEM
       multipart-post (>= 1.2, < 3)
     json (2.3.0)
     multipart-post (2.1.1)
-    mustermann (1.0.3)
+    mustermann (1.1.1)
+      ruby2_keywords (~> 0.0.1)
     net-http-persistent (3.0.1)
       connection_pool (~> 2.2)
     rack (2.2.3)
-    rack-protection (2.0.5)
+    rack-protection (2.2.0)
       rack
-    sinatra (2.0.5)
+    ruby2_keywords (0.0.5)
+    sinatra (2.2.0)
       mustermann (~> 1.0)
-      rack (~> 2.0)
-      rack-protection (= 2.0.5)
+      rack (~> 2.2)
+      rack-protection (= 2.2.0)
       tilt (~> 2.0)
     stripe (4.21.2)
       faraday (~> 0.13)
       net-http-persistent (~> 3.0)
-    tilt (2.0.9)
+    tilt (2.0.10)
 
 PLATFORMS
   ruby
@@ -32,7 +34,7 @@ DEPENDENCIES
   dotenv (= 2.7.4)
   encrypted_cookie (= 0.0.5)
   json (= 2.3.0)
-  sinatra (= 2.0.5)
+  sinatra (= 2.2.0)
   stripe (= 4.21.2)
 
 RUBY VERSION
